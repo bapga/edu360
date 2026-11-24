@@ -1,40 +1,57 @@
-# EDU360 - Hệ thống quản trị trường học
+# EDU360 — Hệ thống quản trị trường học
 
 Trường Trung học nghề Đông Nam Nghệ An.
 
-Công nghệ: React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query, React Hook Form, Zod, Supabase.
+EDU360 là hệ thống quản trị nhà trường thống nhất, phát triển theo từng giai đoạn trên nền tảng React, TypeScript, Vite, Tailwind CSS, React Router, TanStack Query và Supabase.
+
+## Công nghệ
+
+- React 18, TypeScript, Vite
+- Tailwind CSS, React Router
+- TanStack Query, React Hook Form, Zod
+- Supabase Auth, PostgreSQL và Row Level Security (RLS)
 
 ## Chạy cục bộ
 
-    npm install
-<<<<<<< HEAD
-    cp .env.example .env     # điền VITE_SUPABASE_ANON_KEY (khóa công khai)
-=======
-    cp .env.example .env
->>>>>>> 891be7a028beb278bc0477bc36bd9cf7faac2646
-    npm run dev
-    npm run build
+```bash
+npm install
+cp .env.example .env
+# Điền VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY bằng khóa công khai của dự án
+npm run dev
+```
+
+Kiểm tra mã nguồn và build:
+
+```bash
+npm run typecheck
+npm run build
+```
 
 ## Supabase
 
-<<<<<<< HEAD
-Project: EDU360 (`akckcnijujtevfbginja`), vùng ap-southeast-1.
-Chỉ dùng khóa công khai ở frontend. Không đưa service role key vào mã nguồn hay biến `VITE_*`.
-Phân quyền được thực thi bằng RLS tại PostgreSQL.
+Dự án sử dụng Supabase EDU360 (`akckcnijujtevfbginja`), khu vực `ap-southeast-1`.
 
-## Dữ liệu mẫu
+Frontend chỉ được sử dụng publishable key hoặc anon key. Tuyệt đối không đưa `service_role` key hoặc secret key vào mã nguồn frontend hay biến môi trường có tiền tố `VITE_`.
 
-`VITE_DEMO_DATA=true` hiển thị dữ liệu mẫu trên dashboard (development/preview).
-Production đặt `false` hoặc bỏ trống: dashboard hiển thị trạng thái trống.
+Phân quyền dữ liệu phải được thực thi tại PostgreSQL bằng RLS. Kiểm tra quyền ở giao diện chỉ nhằm cải thiện trải nghiệm, không thay thế RLS.
 
-## Trạng thái
+## Cấu hình môi trường
 
-Đã có: khung ứng dụng, sidebar thu gọn, header, breadcrumb, tìm phân hệ, dashboard.
-Chưa có: đăng nhập, PWA, các phân hệ nghiệp vụ (xem lộ trình Giai đoạn 2-10).
-=======
-Project EDU360: `akckcnijujtevfbginja` (ap-southeast-1). Frontend chỉ dùng publishable/anon key; không đưa service role key vào biến `VITE_*`. Phân quyền dữ liệu được thực thi bằng RLS tại PostgreSQL.
+Các biến môi trường cần thiết:
 
-## Trạng thái
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_DEMO_DATA` (chỉ bật dữ liệu minh họa khi chủ động đặt `true`; production phải tắt)
 
-Đã có khung ứng dụng, sidebar, header, dashboard và điều hướng. Các phân hệ nghiệp vụ sẽ được triển khai theo lộ trình EDU360.
->>>>>>> 891be7a028beb278bc0477bc36bd9cf7faac2646
+Không commit tệp `.env` hoặc bất kỳ bí mật nào.
+
+## Tình trạng triển khai
+
+Repository hiện có khung ứng dụng, đăng nhập Supabase, quản lý phiên đăng nhập, dashboard, sidebar và điều hướng các phân hệ. Cơ chế kiểm tra trạng thái hồ sơ, nạp quyền từ RPC, lọc menu theo quyền và các phân hệ nghiệp vụ đang tiếp tục được hoàn thiện.
+
+## Nguyên tắc phát triển
+
+- Tiếp tục trên repository hiện có, không tạo dự án thay thế.
+- Không tự ý thay đổi schema, migration, RLS, dữ liệu hoặc quyền trong Supabase.
+- Không đưa dữ liệu demo vào quy trình production.
+- Mọi thay đổi cần được kiểm tra TypeScript, test phù hợp và production build trước khi phát hành.
