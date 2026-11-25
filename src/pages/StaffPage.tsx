@@ -209,7 +209,9 @@ export default function StaffPage() {
 
   async function endAssignment(assignment: Assignment) {
     if (!supabase || !canUpdate) return
-    const endDate = new Date().toISOString().slice(0, 10)
+    const now = new Date()
+    const today = new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10)
+    const endDate = today < assignment.start_date ? assignment.start_date : today
     const { error: updateError } = await supabase.from('staff_assignments')
       .update({ status: 'ended', end_date: endDate, is_primary: false })
       .eq('id', assignment.id)
@@ -342,7 +344,16 @@ export default function StaffPage() {
                   return <tr key={person.id} className="hover:bg-slate-50">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-xs text-brand-700">{person.staff_code}</td>
                     <td className="px-3 py-3"><div className="font-medium text-navy-900">{person.full_name}</div><div className="mt-0.5 text-xs text-slate-500">{person.email ?? 'Chưa có email'}</div></td>
-                    <td className="px-3 py-3"><div className="text-slate-700">{primary?.org_units?.name ?? 'Chưa phân công'}</div><div className="mt-0.5 text-xs text-slate-500">{primary?.position_title ?? '—'}</div>{personAssignments.length > 1 && <div className="mt-1 text-xs text-slate-400">+{personAssignments.length - 1} phân công khác</div>}</td>
+                    <td className="px-3 py-3">
+                      <div className="text-slate-700">{primary?.org_units?.name ?? 'Chưa phân công'}</div>
+                      <div className="mt-0.5 text-xs text-slate-500">{primary?.position_title ?? '—'}</div>
+                      {personAssignments.filter((assignment) => assignment.status === 'active').map((assignment) => (
+                        <div key={assignment.id} className="mt-1 flex items-center justify-between gap-2 text-xs text-slate-500">
+                          <span>{assignment.org_units?.name ?? 'Đơn vị'}{assignment.is_primary ? ' · Chính' : ''}</span>
+                          {canUpdate && <button type="button" onClick={() => void endAssignment(assignment)} className="font-medium text-amber-700 hover:underline">Kết thúc</button>}
+                        </div>
+                      ))}
+                    </td>
                     <td className="whitespace-nowrap px-3 py-3 text-slate-600">{person.phone ?? '—'}</td>
                     <td className="px-3 py-3"><span className={'badge ' + statusStyles[person.status]}>{statusLabels[person.status]}</span></td>
                     <td className="px-3 py-3 text-right"><div className="flex justify-end gap-2">{canCreate && <button type="button" onClick={() => openAssignment(person)} className="btn-ghost">Phân công</button>}{canUpdate && <button type="button" onClick={() => openEdit(person)} className="btn-ghost">Sửa</button>}</div></td>
