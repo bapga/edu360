@@ -80,7 +80,7 @@ export default function OrganizationPage() {
           <h1 className="mt-1 text-2xl font-semibold text-navy-900">Cơ cấu tổ chức</h1>
           <p className="mt-1 text-sm text-slate-500">Danh mục đơn vị được lấy trực tiếp từ cơ sở dữ liệu dùng chung.</p>
         </div>
-        <button type="button" onClick={() => void loadUnits()} disabled={loading} className="btn-secondary inline-flex items-center gap-2">
+        <button type="button" onClick={() => void loadUnits()} disabled={loading} className="btn-ghost inline-flex items-center gap-2">
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Làm mới
         </button>
       </div>
@@ -105,9 +105,9 @@ export default function OrganizationPage() {
           <label className="relative min-w-0 flex-1">
             <span className="sr-only">Tìm đơn vị</span>
             <Search size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên hoặc mã đơn vị..." className="input w-full pl-10" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm theo tên hoặc mã đơn vị..." className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-800 placeholder:text-slate-400" />
           </label>
-          <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as 'all' | UnitType)} className="input sm:w-52" aria-label="Lọc loại đơn vị">
+          <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as 'all' | UnitType)} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 sm:w-52" aria-label="Lọc loại đơn vị">
             <option value="all">Tất cả loại đơn vị</option>
             {typeOrder.map((type) => <option key={type} value={type}>{typeLabels[type]}</option>)}
           </select>
