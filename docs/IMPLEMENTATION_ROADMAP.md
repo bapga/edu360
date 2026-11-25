@@ -36,6 +36,23 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 - `ban_giam_hieu`: chỉ xem báo cáo theo tiêu chí người dùng đã chốt; không quản lý nhân sự/người học/đào tạo, không thao tác ghi, không quản trị/phê duyệt.
 - Giáo viên, chuyên viên, trưởng/phó phòng, trưởng/phó khoa và học sinh: quyền tối thiểu theo nhiệm vụ và phạm vi được giao; mặc định deny nếu chưa được cấp.
 
+## Trạng thái thực hiện ngày 2026-11-25
+
+| Phân hệ | Tình trạng nhánh tính năng | Chặn phát hành |
+|---|---|---|
+| Đăng nhập và quyền | Frontend guards, permission provider, CI đã có | Cần sửa RLS metadata và role matrix production |
+| Quản trị hệ thống | Ma trận quyền, request/approval queue, lịch sử, audit viewer | Cần vá separation-of-duty ở RPC production |
+| Cơ cấu tổ chức | Trang đọc/ghi theo permission, tìm kiếm/lọc, kiểm soát cha-con | Quyền org chưa cấp cho system_admin trong DB; cần kiểm thử tài khoản |
+| Nhân sự | Danh sách, hồ sơ, phân công, kết thúc phân công | Chưa có dữ liệu; cần kiểm thử RLS theo scope |
+| Báo cáo | Trang BGH riêng, không hiển thị số liệu giả | Chưa có report RPC/view và chưa có bảng nghiệp vụ người học/đào tạo |
+| Tuyển sinh | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
+| Người học | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
+| Đào tạo/giảng dạy/điểm | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
+| Hành chính/tài chính/tài sản | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
+| AI-OFFICE | Chưa triển khai | Chờ nguồn dữ liệu và kiểm soát truy cập |
+
+Mô hình dữ liệu đề xuất cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Không áp dụng DDL lên production trong giai đoạn này.
+
 ## Lộ trình triển khai
 
 | Chặng | Phạm vi | Tiêu chí hoàn thành |
