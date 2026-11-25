@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useAuth } from './AuthContext'
 import { supabase } from '../lib/supabase'
 
@@ -29,36 +29,47 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
   const [profileStatus, setProfileStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const loadedUserIdRef = useRef<string | null>(null)
+  const requestIdRef = useRef(0)
 
   const refresh = useCallback(async () => {
+    const requestId = ++requestIdRef.current
     if (!supabase || !user) {
+      loadedUserIdRef.current = null
       setPermissions([])
       setProfileStatus(null)
       setError(null)
       setLoading(false)
       return
     }
-    setLoading(true)
+    const isNewUser = loadedUserIdRef.current !== user.id
+    if (isNewUser) setLoading(true)
     setError(null)
     try {
       const { data: profile, error: profileError } = await supabase
         .from('profiles').select('status').eq('id', user.id).maybeSingle()
       if (profileError) throw profileError
       if (!profile) throw new Error('Tài khoản chưa có hồ sơ trong hệ thống.')
-      setProfileStatus(profile.status)
-      if (profile.status !== 'active') {
-        setPermissions([])
-        return
+      const nextStatus = profile.status
+      let nextPermissions: PermissionRow[] = []
+      if (nextStatus === 'active') {
+        const { data, error: permissionError } = await supabase.rpc('my_permissions')
+        if (permissionError) throw permissionError
+        nextPermissions = (data ?? []) as PermissionRow[]
       }
-      const { data, error: permissionError } = await supabase.rpc('my_permissions')
-      if (permissionError) throw permissionError
-      setPermissions((data ?? []) as PermissionRow[])
+      if (requestId !== requestIdRef.current) return
+      setProfileStatus(nextStatus)
+      setPermissions(nextPermissions)
     } catch (cause) {
+      if (requestId !== requestIdRef.current) return
       setPermissions([])
       setProfileStatus(null)
       setError(cause instanceof Error ? cause.message : 'Không thể tải quyền truy cập.')
     } finally {
-      setLoading(false)
+      if (requestId === requestIdRef.current) {
+        loadedUserIdRef.current = user.id
+        setLoading(false)
+      }
     }
   }, [user])
 
@@ -82,13 +93,11 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     permissions, profileStatus, loading, error, refresh, isSystemAdmin, isBgh,
     can: (moduleCode, action = 'view') => {
       if (loading || error || profileStatus !== 'active') return false
-      if (isSystemAdmin) return true
       if (isBgh) return moduleCode === 'reports' && action === 'view'
       return permissions.some((p) => p.module_code === moduleCode && p.action === action)
     },
     scopeFor: (moduleCode, action = 'view') => {
       if (loading || error || profileStatus !== 'active') return null
-      if (isSystemAdmin) return 'all'
       if (isBgh && (moduleCode !== 'reports' || action !== 'view')) return null
       const rows = permissions.filter((p) => p.module_code === moduleCode && p.action === action)
       if (!rows.length) return null
