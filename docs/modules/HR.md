@@ -46,7 +46,7 @@ Ràng buộc:
 ## 4. Bảo mật và audit
 
 - Staff SELECT: hồ sơ của chính người dùng, hoặc quyền hr.view toàn cục/đơn vị theo phân công.
-- Staff INSERT: hr.create.
+- Staff INSERT: hr.create (policy hiện yêu cầu scope toàn trường vì không nhận org_unit_id).
 - Staff UPDATE: hr.update toàn cục hoặc theo đơn vị có phân công.
 - Staff assignments SELECT: quyền hr.view theo đơn vị hoặc phân công của chính người dùng.
 - Staff assignments INSERT: hr.create theo org_unit_id.
@@ -60,13 +60,14 @@ Ràng buộc:
 - Tìm kiếm mã, họ tên, email, điện thoại; lọc trạng thái.
 - Hiển thị đơn vị/chức vụ từ staff_assignments trong phạm vi RLS cho phép.
 - Tạo/sửa hồ sơ được ẩn/hiện theo hr.create và hr.update.
+- Tạo phân công theo phòng/khoa, chức vụ, ngày hiệu lực, phân công chính; kết thúc phân công qua UPDATE, không xóa cứng.
 - Không có chức năng xóa cứng; trạng thái nghỉ việc/nghỉ hưu được lưu theo status.
 - Không tự tạo tài khoản đăng nhập khi thêm hồ sơ nhân sự; liên kết user_id là quy trình riêng.
 - Không tạo dữ liệu mẫu trên production.
 
 ## 6. Các bước tiếp theo
 
-1. Bổ sung màn hình quản lý phân công: đơn vị, chức vụ, ngày hiệu lực, phân công chính, kết thúc phân công.
+1. Hoàn thiện kiểm thử luồng phân công và xử lý xung đột một phân công chính; hiện đã có tạo/kết thúc phân công trên giao diện.
 2. Thiết kế luồng liên kết hồ sơ staff với profiles/auth.users; không tự gửi email mời hoặc tạo tài khoản nếu chưa có phê duyệt.
 3. Bổ sung import Excel có xem trước, kiểm tra trùng mã/số định danh và báo cáo lỗi trước khi ghi.
 4. Kiểm thử RLS theo quyền hr.view/create/update và phạm vi org_unit_id.
