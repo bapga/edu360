@@ -26,7 +26,6 @@ const PermissionContext = createContext<PermissionState | null>(null)
 export function PermissionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
   const [permissions, setPermissions] = useState<PermissionRow[]>([])
-  const [assignedRoleCodes, setAssignedRoleCodes] = useState<string[]>([])
   const [profileStatus, setProfileStatus] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +37,6 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     if (!supabase || !user) {
       loadedUserIdRef.current = null
       setPermissions([])
-      setAssignedRoleCodes([])
       setProfileStatus(null)
       setError(null)
       setLoading(false)
@@ -54,23 +52,13 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
       if (!profile) throw new Error('Tài khoản chưa có hồ sơ trong hệ thống.')
       const nextStatus = profile.status
       let nextPermissions: PermissionRow[] = []
-      let nextRoleCodes: string[] = []
       if (nextStatus === 'active') {
-        const { data: roles, error: rolesError } = await supabase
-          .from('user_roles')
-          .select('roles!user_roles_role_id_fkey(code)')
-          .eq('user_id', user.id)
-        if (rolesError) throw rolesError
-        nextRoleCodes = (roles ?? [])
-          .map((row) => (row.roles as unknown as { code: string } | null)?.code)
-          .filter((code): code is string => Boolean(code))
         const { data, error: permissionError } = await supabase.rpc('my_permissions')
         if (permissionError) throw permissionError
         nextPermissions = (data ?? []) as PermissionRow[]
       }
       if (requestId !== requestIdRef.current) return
       setProfileStatus(nextStatus)
-      setAssignedRoleCodes(nextRoleCodes)
       setPermissions(nextPermissions)
     } catch (cause) {
       if (requestId !== requestIdRef.current) return
@@ -98,7 +86,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh, user])
 
-  const roleCodes = assignedRoleCodes.map((code) => code.toLowerCase())
+  const roleCodes = permissions.map((permission) => permission.role_code.toLowerCase())
   const isSystemAdmin = roleCodes.includes('system_admin')
   const isBgh = roleCodes.includes('ban_giam_hieu') && !isSystemAdmin
 
