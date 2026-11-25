@@ -44,6 +44,7 @@ export default function OrganizationPage() {
   const [typeFilter, setTypeFilter] = useState<'all' | UnitType>('all')
   const [showInactive, setShowInactive] = useState(false)
   const [editing, setEditing] = useState<OrgUnit | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
   const [form, setForm] = useState<UnitForm>(emptyForm)
 
   const loadUnits = useCallback(async () => {
@@ -91,12 +92,14 @@ export default function OrganizationPage() {
 
   function openCreate() {
     setEditing(null)
+    setFormOpen(true)
     setForm({ ...emptyForm, sort_order: String(Math.max(0, ...units.map((unit) => unit.sort_order)) + 1) })
     setFormError(null)
   }
 
   function openEdit(unit: OrgUnit) {
     setEditing(unit)
+    setFormOpen(true)
     setForm({
       code: unit.code,
       name: unit.name,
@@ -161,6 +164,7 @@ export default function OrganizationPage() {
       return
     }
     setEditing(null)
+    setFormOpen(false)
     setForm(emptyForm)
     await loadUnits()
   }
@@ -260,12 +264,12 @@ export default function OrganizationPage() {
       </section>
       {!canCreate && !canUpdate && <p className="text-xs text-slate-400">Chế độ hiện tại: chỉ xem. Quyền quản lý cơ cấu tổ chức chưa được cấp cho tài khoản này.</p>}
 
-      {(editing !== null || form.code === '' && form.name === '' && canCreate && form.sort_order !== '0' && false) && (
+      {formOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy-950/50 p-4" role="presentation">
           <div role="dialog" aria-modal="true" aria-labelledby="org-form-title" className="my-auto w-full max-w-xl rounded-2xl bg-white p-5 shadow-xl sm:p-6">
             <div className="mb-5 flex items-center justify-between">
               <h2 id="org-form-title" className="text-lg font-semibold text-navy-900">{editing ? 'Chỉnh sửa đơn vị' : 'Thêm đơn vị'}</h2>
-              <button type="button" onClick={() => setEditing(null)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Đóng"><X size={18} /></button>
+              <button type="button" onClick={() => setFormOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Đóng"><X size={18} /></button>
             </div>
             <form onSubmit={saveUnit} className="space-y-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
