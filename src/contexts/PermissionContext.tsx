@@ -18,6 +18,8 @@ interface PermissionState {
   can: (moduleCode: string, action?: PermissionAction) => boolean
   scopeFor: (moduleCode: string, action?: PermissionAction) => PermissionRow['data_scope'] | null
   refresh: () => Promise<void>
+  isSystemAdmin: boolean
+  isBgh: boolean
 }
 const PermissionContext = createContext<PermissionState | null>(null)
 
@@ -72,18 +74,29 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     }
   }, [refresh, user])
 
+  const roleCodes = permissions.map((p) => p.role_code.toUpperCase())
+  const isSystemAdmin = roleCodes.includes('SYSTEM_ADMIN')
+  const isBgh = roleCodes.includes('BGH') && !isSystemAdmin
+
   const value = useMemo<PermissionState>(() => ({
-    permissions, profileStatus, loading, error, refresh,
-    can: (moduleCode, action = 'view') => !loading && !error && profileStatus === 'active'
-      && permissions.some((p) => p.module_code === moduleCode && p.action === action),
+    permissions, profileStatus, loading, error, refresh, isSystemAdmin, isBgh,
+    can: (moduleCode, action = 'view') => {
+      if (loading || error || profileStatus !== 'active') return false
+      if (isSystemAdmin) return true
+      if (isBgh) return moduleCode === 'reports' && action === 'view'
+      return permissions.some((p) => p.module_code === moduleCode && p.action === action)
+    },
     scopeFor: (moduleCode, action = 'view') => {
+      if (loading || error || profileStatus !== 'active') return null
+      if (isSystemAdmin) return 'all'
+      if (isBgh && (moduleCode !== 'reports' || action !== 'view')) return null
       const rows = permissions.filter((p) => p.module_code === moduleCode && p.action === action)
       if (!rows.length) return null
       if (rows.some((p) => p.data_scope === 'all')) return 'all'
       if (rows.some((p) => p.data_scope === 'unit')) return 'unit'
       return 'own'
     },
-  }), [permissions, profileStatus, loading, error, refresh])
+  }), [permissions, profileStatus, loading, error, refresh, isSystemAdmin, isBgh])
 
   return <PermissionContext.Provider value={value}>{children}</PermissionContext.Provider>
 }
