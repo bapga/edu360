@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
 import AccessGate from './AccessGate'
+import { usePermissions } from '../contexts/PermissionContext'
 
 const routeModules: Record<string, string> = {
   '/to-chuc': 'org', '/nhan-su': 'hr', '/hanh-chinh': 'admin_docs',
@@ -16,7 +17,10 @@ export default function Layout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const { pathname } = useLocation()
-  const moduleCode = Object.entries(routeModules).find(([path]) => pathname === path || pathname.startsWith(path + '/'))?.[1]
+  const { can } = usePermissions()
+  const moduleCode = pathname === '/nguoi-hoc' && !can('students', 'view') && can('grades', 'view')
+    ? 'grades'
+    : Object.entries(routeModules).find(([path]) => pathname === path || pathname.startsWith(path + '/'))?.[1]
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar collapsed={collapsed} mobileOpen={mobileOpen}
