@@ -143,6 +143,60 @@ $function$;
 - Chạy trong transaction có xác minh hậu điều kiện và chuẩn bị rollback.
 - Không dùng SQL này để cấp quyền cho tài khoản cá nhân hoặc tạo tài khoản.
 
+
+## 6. RLS metadata — BGH hiện còn đọc được dữ liệu cấu hình
+
+Kiểm tra toàn bộ pg_policies cho thấy một số bảng hiện cho phép mọi tài khoản active đọc:
+- modules_select: private.is_active_user().
+- roles_select: private.is_active_user().
+- role_permissions_select: private.is_active_user().
+- org_units_select: private.is_active_user().
+
+Như vậy, dù BGH bị chặn menu, họ vẫn có thể gọi Supabase API trực tiếp để đọc danh mục phân hệ, vai trò, ma trận quyền và danh sách cơ cấu tổ chức. Điều này chưa đáp ứng yêu cầu “BGH chỉ xem báo cáo”.
+
+SQL dự thảo để siết các bảng cấu hình và danh mục tổ chức:
+
+~~~sql
+begin;
+
+drop policy if exists modules_select on public.modules;
+create policy modules_select on public.modules
+for select to authenticated
+using (private.has_permission('system','view'));
+
+drop policy if exists roles_select on public.roles;
+create policy roles_select on public.roles
+for select to authenticated
+using (private.has_permission('system','view'));
+
+drop policy if exists role_permissions_select on public.role_permissions;
+create policy role_permissions_select on public.role_permissions
+for select to authenticated
+using (private.has_permission('system','view'));
+
+drop policy if exists org_units_select on public.org_units;
+create policy org_units_select on public.org_units
+for select to authenticated
+using (
+  private.has_permission('system','view')
+  or private.has_permission('org','view', id)
+  or private.has_permission('hr','view', id)
+  or private.has_permission('admissions','view', id)
+  or private.has_permission('students','view', id)
+  or private.has_permission('training','view', id)
+  or private.has_permission('teaching','view', id)
+);
+
+commit;
+~~~
+
+Lưu ý:
+- Đây là dự thảo, chưa áp dụng.
+- my_permissions() là SECURITY DEFINER và vẫn có thể trả về quyền của chính người đăng nhập; PermissionContext nên dùng kết quả đó để nhận diện role thay vì yêu cầu BGH đọc trực tiếp roles/role_permissions.
+- user_roles hiện có policy cho phép người dùng đọc assignment của chính mình; cần đánh giá có giữ lại cho self-service hay chuyển sang RPC tối thiểu.
+- Các báo cáo BGH cần được cung cấp qua RPC/view tổng hợp có kiểm tra reports.view; không mở SELECT trực tiếp các bảng nhân sự/người học chỉ để dựng biểu đồ.
+- Trước khi áp dụng phải kiểm thử các phân hệ cần tên đơn vị (HR, tuyển sinh, người học, đào tạo, giảng dạy) để tránh vô tình chặn dữ liệu tham chiếu.
+
 ## 5. Điểm cần xử lý thêm
 
 Hàm private.apply_permission_change hiện dùng NOT EXISTS trước INSERT cho matrix_grant; vì PK là (role_id,module_id,action), nếu action đã tồn tại với scope khác thì có thể gặp duplicate key. Cần đổi sang upsert có chủ đích và kiểm tra payload trước khi áp dụng.
