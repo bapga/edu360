@@ -115,7 +115,7 @@ export default function OrganizationPage() {
     const descendants = new Set<string>()
     let frontier = [unitId]
     while (frontier.length) {
-      const next = units.filter((unit) => unit.parent_id && frontier.includes(unit.parent_id))
+      const next = units.filter((unit) => unit.id !== unitId && !descendants.has(unit.id) && unit.parent_id && frontier.includes(unit.parent_id))
       next.forEach((unit) => descendants.add(unit.id))
       frontier = next.map((unit) => unit.id)
     }
@@ -289,7 +289,7 @@ export default function OrganizationPage() {
                 <label className="block text-sm font-medium text-slate-700">Đơn vị cấp trên
                   <select value={form.parent_id} onChange={(event) => setForm((old) => ({ ...old, parent_id: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                     <option value="">Không có</option>
-                    {units.filter((unit) => unit.id !== editing?.id && (!editing || !descendantsOf(editing.id).has(unit.id))).map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
+                    {units.filter((unit) => unit.is_active && unit.id !== editing?.id && (!editing || !descendantsOf(editing.id).has(unit.id))).map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
                   </select>
                 </label>
                 <label className="block text-sm font-medium text-slate-700">Thứ tự hiển thị
@@ -302,7 +302,7 @@ export default function OrganizationPage() {
               </label>
               {formError && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{formError}</div>}
               <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                <button type="button" onClick={() => setEditing(null)} className="btn-ghost">Hủy</button>
+                <button type="button" onClick={() => { setFormOpen(false); setEditing(null) }} className="btn-ghost">Hủy</button>
                 <button type="submit" disabled={saving} className="btn-primary">{saving ? 'Đang lưu...' : 'Lưu đơn vị'}</button>
               </div>
             </form>
