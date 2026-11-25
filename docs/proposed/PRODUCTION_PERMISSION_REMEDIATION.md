@@ -197,6 +197,21 @@ Lưu ý:
 - Các báo cáo BGH cần được cung cấp qua RPC/view tổng hợp có kiểm tra reports.view; không mở SELECT trực tiếp các bảng nhân sự/người học chỉ để dựng biểu đồ.
 - Trước khi áp dụng phải kiểm thử các phân hệ cần tên đơn vị (HR, tuyển sinh, người học, đào tạo, giảng dạy) để tránh vô tình chặn dữ liệu tham chiếu.
 
+
+## 7. Kiểm kê SECURITY DEFINER RPC
+
+Đã kiểm tra các SECURITY DEFINER functions có EXECUTE cho role authenticated. Các hàm nghiệp vụ chính đã có guard tương ứng:
+- admin_link_staff/admin_unlink_staff: yêu cầu system.update và chặn tự sửa liên kết tài khoản của chính mình.
+- admin_list_linkable_staff: yêu cầu system.view.
+- request_permission_change: yêu cầu system.update, loại thay đổi nằm trong allowlist, lý do tối thiểu 10 ký tự và chặn tự đề xuất thay đổi role assignment của chính mình.
+- decide_permission_change: yêu cầu system.approve, chỉ xử lý pending, chặn requester tự quyết định và chặn tự thay đổi role assignment.
+- log_auth_event: chỉ ghi login/logout cho auth.uid() hiện tại.
+- update_my_profile: chỉ cập nhật hồ sơ của auth.uid(), kiểm tra tên và avatar URL.
+- my_permissions: chỉ trả quyền của auth.uid() và profile active.
+- private.has_permission/private.is_active_user: helper RLS; không trả dữ liệu hồ sơ.
+
+Các hàm trên đều đặt search_path rỗng. Chưa thấy bằng chứng các hàm này cho phép anonymous gọi thực thi; tuy vậy, cần giữ regression tests cho EXECUTE grants và guard logic khi thay đổi migration.
+
 ## 6. Điểm cần xử lý thêm
 
 Hàm private.apply_permission_change hiện dùng NOT EXISTS trước INSERT cho matrix_grant; vì PK là (role_id,module_id,action), nếu action đã tồn tại với scope khác thì có thể gặp duplicate key. Cần đổi sang upsert có chủ đích và kiểm tra payload trước khi áp dụng.
