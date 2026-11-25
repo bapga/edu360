@@ -23,6 +23,7 @@ interface PermissionRequest {
   decided_at: string | null
   decision_note: string | null
 }
+interface AuditLog { id: number; occurred_at: string; actor_id: string | null; action: string; table_name: string; record_id: string | null }
 interface RolePermission {
   role_id: string
   module_id: string
@@ -53,6 +54,7 @@ export default function SystemAdminPage() {
   const [units, setUnits] = useState<OrgUnit[]>([])
   const [requests, setRequests] = useState<PermissionRequest[]>([])
   const [matrix, setMatrix] = useState<RolePermission[]>([])
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
   const [myRoleCodes, setMyRoleCodes] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -76,7 +78,7 @@ export default function SystemAdminPage() {
     }
     setLoading(true)
     setError(null)
-    const [rolesResult, modulesResult, profilesResult, unitsResult, requestsResult, matrixResult, myRolesResult] = await Promise.all([
+    const [rolesResult, modulesResult, profilesResult, unitsResult, requestsResult, matrixResult, myRolesResult, auditResult] = await Promise.all([
       supabase.from('roles').select('id,code,name').order('name'),
       supabase.from('modules').select('id,code,name').order('sort_order'),
       supabase.from('profiles').select('id,full_name,email,status').order('full_name'),
@@ -84,8 +86,9 @@ export default function SystemAdminPage() {
       supabase.from('permission_change_requests').select('id,change_type,payload,reason,status,requested_by,requested_at,decided_by,decided_at,decision_note').order('requested_at', { ascending: false }),
       supabase.from('role_permissions').select('role_id,module_id,action,data_scope,roles(code,name),modules(code,name)'),
       supabase.from('user_roles').select('roles!user_roles_role_id_fkey(code)').eq('user_id', user.id),
+      supabase.from('audit_logs').select('id,occurred_at,actor_id,action,table_name,record_id').order('occurred_at', { ascending: false }).limit(100),
     ])
-    const failure = rolesResult.error || modulesResult.error || profilesResult.error || unitsResult.error || requestsResult.error || matrixResult.error || myRolesResult.error
+    const failure = rolesResult.error || modulesResult.error || profilesResult.error || unitsResult.error || requestsResult.error || matrixResult.error || myRolesResult.error || auditResult.error
     if (failure) {
       setError(failure.message)
     } else {
@@ -95,6 +98,7 @@ export default function SystemAdminPage() {
       setUnits((unitsResult.data ?? []) as OrgUnit[])
       setRequests((requestsResult.data ?? []) as PermissionRequest[])
       setMatrix((matrixResult.data ?? []) as unknown as RolePermission[])
+      setAuditLogs((auditResult.data ?? []) as AuditLog[])
       setMyRoleCodes((myRolesResult.data ?? []).map((row) => (row.roles as unknown as { code: string } | null)?.code?.toLowerCase()).filter((code): code is string => Boolean(code)))
       if (!roleCode && rolesResult.data?.length) setRoleCode(rolesResult.data[0].code)
       if (!moduleCode && modulesResult.data?.length) setModuleCode(modulesResult.data[0].code)
@@ -105,6 +109,7 @@ export default function SystemAdminPage() {
   useEffect(() => { void loadData() }, [loadData])
 
   const pending = useMemo(() => requests.filter((request) => request.status === 'pending'), [requests])
+  const history = useMemo(() => requests.filter((request) => request.status !== 'pending'), [requests])
   const canRequest = can('system', 'update')
   const canApprove = can('system', 'approve')
   const selectedRole = roles.find((role) => role.code === roleCode)
@@ -322,6 +327,51 @@ export default function SystemAdminPage() {
                 )}
               </article>
             })}
+          </div>
+        )}
+      </section>
+
+      <section className="card p-4 sm:p-5">
+        <div className="flex items-center justify-between"><h2 className="font-semibold text-navy-900">Lịch sử phê duyệt</h2><span className="text-xs text-slate-500">{history.length} yêu cầu đã xử lý</span></div>
+        {history.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Chưa có yêu cầu nào được xử lý.</p> : (
+          <div className="mt-4 space-y-3">
+            {history.slice(0, 30).map((request) => {
+              const requester = profiles.find((profile) => profile.id === request.requested_by)
+              const decider = profiles.find((profile) => profile.id === request.decided_by)
+              return <div key={request.id} className="rounded-lg border border-slate-100 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm font-medium text-navy-900">{changeLabels[request.change_type]} · {requestDescription(request)}</div>
+                  <span className={request.status === 'applied' ? 'badge bg-emerald-50 text-emerald-700' : 'badge bg-slate-100 text-slate-600'}>{statusLabels[request.status] ?? request.status}</span>
+                </div>
+                <div className="mt-1 text-xs text-slate-500">Đề xuất: {requester?.full_name ?? requester?.email ?? 'Tài khoản'} · {new Date(request.requested_at).toLocaleString('vi-VN')}</div>
+                <div className="mt-1 text-xs text-slate-500">Quyết định: {decider?.full_name ?? decider?.email ?? 'Chưa rõ'} · {request.decided_at ? new Date(request.decided_at).toLocaleString('vi-VN') : '—'}</div>
+                {request.decision_note && <p className="mt-2 text-sm text-slate-600">{request.decision_note}</p>}
+              </div>
+            })}
+          </div>
+        )}
+      </section>
+
+      <section className="card p-4 sm:p-5">
+        <div className="flex items-center justify-between"><h2 className="font-semibold text-navy-900">Nhật ký hệ thống</h2><span className="text-xs text-slate-500">100 sự kiện gần nhất</span></div>
+        <p className="mt-1 text-xs text-slate-500">Chỉ hiển thị metadata sự kiện; không tải old_data/new_data để tránh lộ dữ liệu cá nhân.</p>
+        {auditLogs.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">Chưa có nhật ký.</p> : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left text-sm">
+              <thead><tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500"><th className="px-3 py-3">Thời điểm</th><th className="px-3 py-3">Người thực hiện</th><th className="px-3 py-3">Thao tác</th><th className="px-3 py-3">Bảng dữ liệu</th><th className="px-3 py-3">Mã bản ghi</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {auditLogs.map((log) => {
+                  const actor = profiles.find((profile) => profile.id === log.actor_id)
+                  return <tr key={log.id}>
+                    <td className="whitespace-nowrap px-3 py-2 text-xs text-slate-500">{new Date(log.occurred_at).toLocaleString('vi-VN')}</td>
+                    <td className="px-3 py-2">{actor?.full_name ?? actor?.email ?? (log.actor_id ? 'Tài khoản' : 'Hệ thống / chưa ghi nhận')}</td>
+                    <td className="px-3 py-2"><span className="badge bg-slate-100 text-slate-700">{log.action}</span></td>
+                    <td className="px-3 py-2 font-mono text-xs">{log.table_name}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-slate-500">{log.record_id ?? '—'}</td>
+                  </tr>
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
