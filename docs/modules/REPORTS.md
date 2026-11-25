@@ -12,11 +12,12 @@
 - Có bảng staff và staff_assignments nhưng hiện chưa có hồ sơ nhân sự.
 - Có org_units với 9 đơn vị, nhưng cần RLS giới hạn truy cập theo quyền org/hr; BGH không nên đọc trực tiếp org_units.
 - Chưa có bảng nghiệp vụ người học, tuyển sinh, đào tạo, thời khóa biểu, điểm và xét tốt nghiệp.
-- Chưa có public view hoặc RPC báo cáo tổng hợp.
+- Chưa có public view hoặc RPC báo cáo tổng hợp trên production. Bản dự thảo reports_summary() nằm tại docs/proposed/reports_summary.sql; chưa áp dụng.
 
 ## 3. Giao diện đã triển khai
 
 - Trang /bao-cao riêng cho BGH.
+- Có thể tải chỉ số tổng hợp qua reports_summary() sau khi RPC được phê duyệt và triển khai; nếu chưa có RPC, giao diện báo rõ trạng thái chưa sẵn sàng.
 - Danh mục các nhóm báo cáo: nhân sự, người học, tuyển sinh, đào tạo và kết quả.
 - Hiển thị trạng thái nguồn dữ liệu chưa sẵn sàng; không sinh số liệu giả.
 - Không có thao tác quản lý, ghi dữ liệu, import/export hoặc phê duyệt.
