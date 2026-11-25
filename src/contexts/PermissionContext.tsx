@@ -63,7 +63,6 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     } catch (cause) {
       if (requestId !== requestIdRef.current) return
       setPermissions([])
-      setAssignedRoleCodes([])
       setProfileStatus(null)
       setError(cause instanceof Error ? cause.message : 'Không thể tải quyền truy cập.')
     } finally {
