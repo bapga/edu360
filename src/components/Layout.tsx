@@ -6,7 +6,8 @@ import AccessGate from './AccessGate'
 
 const routeModules: Record<string, string> = {
   '/to-chuc': 'org', '/nhan-su': 'hr', '/hanh-chinh': 'admin_docs',
-  '/tuyen-sinh': 'admissions', '/dao-tao': 'training', '/nguoi-hoc': 'students',
+  '/tuyen-sinh': 'admissions', '/dao-tao': 'training',
+  '/nguoi-hoc/diem': 'grades', '/nguoi-hoc': 'students',
   '/cong-viec': 'tasks', '/lich-cong-tac': 'tasks', '/van-ban': 'admin_docs',
   '/bao-cao': 'reports', '/ai-office': 'ai_office', '/quan-tri': 'system',
 }
