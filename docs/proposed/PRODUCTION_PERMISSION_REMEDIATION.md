@@ -210,7 +210,7 @@ Lưu ý:
 - my_permissions: chỉ trả quyền của auth.uid() và profile active.
 - private.has_permission/private.is_active_user: helper RLS; không trả dữ liệu hồ sơ.
 
-Các hàm trên đều đặt search_path rỗng. Chưa thấy bằng chứng các hàm này cho phép anonymous gọi thực thi; tuy vậy, cần giữ regression tests cho EXECUTE grants và guard logic khi thay đổi migration.
+Các hàm trên đều đặt search_path rỗng. Đã xác minh anon không có EXECUTE trên các hàm SECURITY DEFINER thuộc public/private được kiểm tra; tuy vậy, cần giữ regression tests cho EXECUTE grants và guard logic khi thay đổi migration.
 
 ## 6. Điểm cần xử lý thêm
 
