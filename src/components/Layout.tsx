@@ -1,11 +1,29 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header'
 import Sidebar from './Sidebar'
+import AccessGate from './AccessGate'
+
+const routeModules: Record<string, string> = {
+  '/to-chuc': 'org',
+  '/nhan-su': 'hr',
+  '/hanh-chinh': 'admin_docs',
+  '/tuyen-sinh': 'admissions',
+  '/dao-tao': 'training',
+  '/nguoi-hoc': 'students',
+  '/cong-viec': 'tasks',
+  '/lich-cong-tac': 'tasks',
+  '/van-ban': 'admin_docs',
+  '/bao-cao': 'reports',
+  '/ai-office': 'ai_office',
+  '/quan-tri': 'system',
+}
 
 export default function Layout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { pathname } = useLocation()
+  const moduleCode = routeModules[pathname]
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
@@ -18,7 +36,7 @@ export default function Layout() {
         <Header onOpenMenu={() => setMobileOpen(true)} />
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <Outlet />
+            {moduleCode ? <AccessGate moduleCode={moduleCode}><Outlet /></AccessGate> : <Outlet />}
           </div>
         </main>
       </div>
