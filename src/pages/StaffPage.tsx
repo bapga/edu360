@@ -20,6 +20,7 @@ interface Staff {
 interface Assignment {
   id: string
   staff_id: string
+  org_unit_id: string
   position_title: string | null
   is_primary: boolean
   start_date: string
@@ -27,6 +28,9 @@ interface Assignment {
   status: 'active' | 'ended'
   org_units: { name: string; code: string } | null
 }
+interface OrgUnitOption { id: string; code: string; name: string }
+interface AssignmentForm { org_unit_id: string; position_title: string; is_primary: boolean; start_date: string; end_date: string; status: 'active' | 'ended' }
+const emptyAssignment: AssignmentForm = { org_unit_id: '', position_title: '', is_primary: false, start_date: new Date().toISOString().slice(0, 10), end_date: '', status: 'active' }
 interface StaffForm {
   staff_code: string
   full_name: string
@@ -56,6 +60,12 @@ export default function StaffPage() {
   const { can } = usePermissions()
   const [staff, setStaff] = useState<Staff[]>([])
   const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [orgUnits, setOrgUnits] = useState<OrgUnitOption[]>([])
+  const [assignmentTarget, setAssignmentTarget] = useState<Staff | null>(null)
+  const [assignmentOpen, setAssignmentOpen] = useState(false)
+  const [assignmentForm, setAssignmentForm] = useState<AssignmentForm>(emptyAssignment)
+  const [assignmentError, setAssignmentError] = useState<string | null>(null)
+  const [assignmentSaving, setAssignmentSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,15 +84,18 @@ export default function StaffPage() {
     }
     setLoading(true)
     setError(null)
-    const [staffResult, assignmentResult] = await Promise.all([
+    const [staffResult, assignmentResult, unitsResult] = await Promise.all([
       supabase.from('staff')
         .select('id,staff_code,full_name,date_of_birth,gender,national_id,phone,email,address,status')
         .is('deleted_at', null)
         .order('full_name', { ascending: true }),
       supabase.from('staff_assignments')
-        .select('id,staff_id,position_title,is_primary,start_date,end_date,status,org_units(name,code)')
+        .select('id,staff_id,org_unit_id,position_title,is_primary,start_date,end_date,status,org_units(name,code)')
         .order('start_date', { ascending: false }),
+      supabase.from('org_units').select('id,code,name').is('deleted_at', null).eq('is_active', true).order('sort_order'),
     ])
+    if (unitsResult.error) setOrgUnits([])
+    else setOrgUnits((unitsResult.data ?? []) as OrgUnitOption[])
     if (staffResult.error) {
       setError(staffResult.error.message)
       setStaff([])
@@ -147,6 +160,65 @@ export default function StaffPage() {
     })
     setFormError(null)
     setFormOpen(true)
+  }
+
+  function openAssignment(person: Staff) {
+    setAssignmentTarget(person)
+    setAssignmentForm(emptyAssignment)
+    setAssignmentError(null)
+    setAssignmentOpen(true)
+  }
+
+  async function saveAssignment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!supabase || !assignmentTarget) return
+    if (!assignmentForm.org_unit_id) {
+      setAssignmentError('Vui lòng chọn đơn vị công tác.')
+      return
+    }
+    if (!assignmentForm.start_date || (assignmentForm.end_date && assignmentForm.end_date < assignmentForm.start_date)) {
+      setAssignmentError('Ngày kết thúc không được trước ngày bắt đầu.')
+      return
+    }
+    if (assignmentForm.status === 'ended' && !assignmentForm.end_date) {
+      setAssignmentError('Phân công đã kết thúc phải có ngày kết thúc.')
+      return
+    }
+    setAssignmentSaving(true)
+    setAssignmentError(null)
+    const { error: insertError } = await supabase.from('staff_assignments').insert({
+      staff_id: assignmentTarget.id,
+      org_unit_id: assignmentForm.org_unit_id,
+      position_title: assignmentForm.position_title.trim() || null,
+      is_primary: assignmentForm.is_primary,
+      start_date: assignmentForm.start_date,
+      end_date: assignmentForm.end_date || null,
+      status: assignmentForm.status,
+    })
+    setAssignmentSaving(false)
+    if (insertError) {
+      setAssignmentError(insertError.code === '23505'
+        ? 'Phân công bị trùng hoặc nhân sự đã có một phân công chính đang hiệu lực.'
+        : insertError.message)
+      return
+    }
+    setAssignmentOpen(false)
+    setAssignmentTarget(null)
+    await loadStaff()
+  }
+
+  async function endAssignment(assignment: Assignment) {
+    if (!supabase || !canUpdate) return
+    const endDate = new Date().toISOString().slice(0, 10)
+    const { error: updateError } = await supabase.from('staff_assignments')
+      .update({ status: 'ended', end_date: endDate, is_primary: false })
+      .eq('id', assignment.id)
+      .eq('status', 'active')
+    if (updateError) {
+      setError(updateError.message)
+      return
+    }
+    await loadStaff()
   }
 
   async function saveStaff(event: FormEvent<HTMLFormElement>) {
@@ -270,10 +342,10 @@ export default function StaffPage() {
                   return <tr key={person.id} className="hover:bg-slate-50">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-xs text-brand-700">{person.staff_code}</td>
                     <td className="px-3 py-3"><div className="font-medium text-navy-900">{person.full_name}</div><div className="mt-0.5 text-xs text-slate-500">{person.email ?? 'Chưa có email'}</div></td>
-                    <td className="px-3 py-3"><div className="text-slate-700">{primary?.org_units?.name ?? 'Chưa phân công'}</div><div className="mt-0.5 text-xs text-slate-500">{primary?.position_title ?? '—'}</div></td>
+                    <td className="px-3 py-3"><div className="text-slate-700">{primary?.org_units?.name ?? 'Chưa phân công'}</div><div className="mt-0.5 text-xs text-slate-500">{primary?.position_title ?? '—'}</div>{personAssignments.length > 1 && <div className="mt-1 text-xs text-slate-400">+{personAssignments.length - 1} phân công khác</div>}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-slate-600">{person.phone ?? '—'}</td>
                     <td className="px-3 py-3"><span className={'badge ' + statusStyles[person.status]}>{statusLabels[person.status]}</span></td>
-                    <td className="px-3 py-3 text-right">{canUpdate && <button type="button" onClick={() => openEdit(person)} className="btn-ghost">Sửa</button>}</td>
+                    <td className="px-3 py-3 text-right"><div className="flex justify-end gap-2">{canCreate && <button type="button" onClick={() => openAssignment(person)} className="btn-ghost">Phân công</button>}{canUpdate && <button type="button" onClick={() => openEdit(person)} className="btn-ghost">Sửa</button>}</div></td>
                   </tr>
                 })}
               </tbody>
@@ -282,6 +354,45 @@ export default function StaffPage() {
         )}
       </section>
       {!canCreate && !canUpdate && <p className="text-xs text-slate-400">Chế độ hiện tại: chỉ xem. Quyền quản lý nhân sự phụ thuộc phân quyền HR và phạm vi đơn vị được giao.</p>}
+
+      {assignmentOpen && assignmentTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy-950/50 p-4" role="presentation">
+          <div role="dialog" aria-modal="true" aria-labelledby="assignment-form-title" className="my-auto w-full max-w-xl rounded-2xl bg-white p-5 shadow-xl sm:p-6">
+            <div className="mb-5 flex items-center justify-between">
+              <div><h2 id="assignment-form-title" className="text-lg font-semibold text-navy-900">Phân công công tác</h2><p className="mt-1 text-sm text-slate-500">{assignmentTarget.full_name} · {assignmentTarget.staff_code}</p></div>
+              <button type="button" onClick={() => setAssignmentOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Đóng"><X size={18} /></button>
+            </div>
+            <form onSubmit={saveAssignment} className="space-y-4">
+              <label className="block text-sm font-medium text-slate-700">Đơn vị công tác
+                <select required value={assignmentForm.org_unit_id} onChange={(event) => setAssignmentForm((old) => ({ ...old, org_unit_id: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                  <option value="">Chọn phòng/khoa</option>
+                  {orgUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.name} ({unit.code})</option>)}
+                </select>
+              </label>
+              <label className="block text-sm font-medium text-slate-700">Chức vụ / vị trí công tác
+                <input value={assignmentForm.position_title} onChange={(event) => setAssignmentForm((old) => ({ ...old, position_title: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="VD: Trưởng phòng, Giáo viên..." />
+              </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="block text-sm font-medium text-slate-700">Ngày bắt đầu
+                  <input type="date" required value={assignmentForm.start_date} onChange={(event) => setAssignmentForm((old) => ({ ...old, start_date: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                </label>
+                <label className="block text-sm font-medium text-slate-700">Ngày kết thúc
+                  <input type="date" value={assignmentForm.end_date} onChange={(event) => setAssignmentForm((old) => ({ ...old, end_date: event.target.value }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" />
+                </label>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={assignmentForm.is_primary} onChange={(event) => setAssignmentForm((old) => ({ ...old, is_primary: event.target.checked }))} /> Phân công chính</label>
+              <label className="block text-sm font-medium text-slate-700">Trạng thái
+                <select value={assignmentForm.status} onChange={(event) => setAssignmentForm((old) => ({ ...old, status: event.target.value as 'active' | 'ended' }))} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="active">Đang hiệu lực</option><option value="ended">Đã kết thúc</option></select>
+              </label>
+              {assignmentError && <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{assignmentError}</div>}
+              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+                <button type="button" onClick={() => setAssignmentOpen(false)} className="btn-ghost">Hủy</button>
+                <button type="submit" disabled={assignmentSaving} className="btn-primary">{assignmentSaving ? 'Đang lưu...' : 'Lưu phân công'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {formOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-navy-950/50 p-4" role="presentation">
