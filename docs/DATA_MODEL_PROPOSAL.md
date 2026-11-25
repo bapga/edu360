@@ -94,6 +94,37 @@ Quy tắc:
 | graduation_review_items | Điều kiện/kết quả từng người học |
 | graduation_decisions | Quyết định cuối cùng và số văn bản |
 
+### 2.7. Hành chính - Văn bản
+
+| Bảng | Vai trò |
+|---|---|
+| admin_documents | Hồ sơ văn bản đến/đi, số ký hiệu, ngày, trích yếu, đơn vị phát hành |
+| document_types | Danh mục loại văn bản |
+| document_routes | Luồng chuyển xử lý, người/đơn vị nhận, hạn xử lý, trạng thái |
+| document_attachments | Tệp đính kèm trong Storage, metadata và phân loại |
+| document_comments | Ý kiến xử lý, bút phê và lịch sử trao đổi |
+
+Văn bản cần số đến/số đi duy nhất theo sổ và năm; file phải được kiểm soát bằng Storage policy, không lưu đường dẫn công khai.
+
+### 2.8. Tài chính, tài sản và điều hành
+
+| Bảng | Vai trò |
+|---|---|
+| budget_periods | Năm ngân sách/kỳ kế hoạch |
+| budget_items | Dự toán theo nguồn, mục lục và đơn vị |
+| finance_transactions | Khoản thu/chi đã được duyệt, tham chiếu chứng từ |
+| finance_vouchers | Phiếu thu/chi và trạng thái duyệt |
+| asset_categories | Danh mục nhóm tài sản |
+| assets | Hồ sơ tài sản, mã tài sản, nguồn hình thành, giá trị, tình trạng |
+| asset_assignments | Bàn giao tài sản cho đơn vị/người sử dụng |
+| asset_maintenance | Lịch sử sửa chữa, bảo trì, kiểm kê |
+| work_tasks | Công việc, người giao, hạn, mức ưu tiên, trạng thái |
+| task_assignees | Người/đơn vị phối hợp và trách nhiệm |
+| task_comments | Trao đổi và lịch sử cập nhật công việc |
+| work_calendar_events | Lịch họp, lịch công tác, sự kiện của đơn vị |
+
+Các bảng tài chính cần quy trình duyệt và khóa sổ; không cho sửa/xóa giao dịch đã ghi sổ. Tài sản cần lịch sử bàn giao/kiểm kê; không chỉ lưu người giữ hiện tại.
+
 ## 3. Quan hệ chính (ERD định hướng)
 
 ~~~mermaid
