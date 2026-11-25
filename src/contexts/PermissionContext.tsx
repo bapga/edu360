@@ -32,6 +32,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
     if (!supabase || !user) {
       setPermissions([])
       setProfileStatus(null)
+      setError(null)
       setLoading(false)
       return
     }
@@ -52,7 +53,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
       setPermissions((data ?? []) as PermissionRow[])
     } catch (cause) {
       setPermissions([])
-      setProfileStatus((current) => current)
+      setProfileStatus(null)
       setError(cause instanceof Error ? cause.message : 'Không thể tải quyền truy cập.')
     } finally {
       setLoading(false)
