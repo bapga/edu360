@@ -144,7 +144,7 @@ $function$;
 - Không dùng SQL này để cấp quyền cho tài khoản cá nhân hoặc tạo tài khoản.
 
 
-## 6. RLS metadata — BGH hiện còn đọc được dữ liệu cấu hình
+## 5. RLS metadata — BGH hiện còn đọc được dữ liệu cấu hình
 
 Kiểm tra toàn bộ pg_policies cho thấy một số bảng hiện cho phép mọi tài khoản active đọc:
 - modules_select: private.is_active_user().
@@ -197,6 +197,6 @@ Lưu ý:
 - Các báo cáo BGH cần được cung cấp qua RPC/view tổng hợp có kiểm tra reports.view; không mở SELECT trực tiếp các bảng nhân sự/người học chỉ để dựng biểu đồ.
 - Trước khi áp dụng phải kiểm thử các phân hệ cần tên đơn vị (HR, tuyển sinh, người học, đào tạo, giảng dạy) để tránh vô tình chặn dữ liệu tham chiếu.
 
-## 5. Điểm cần xử lý thêm
+## 6. Điểm cần xử lý thêm
 
 Hàm private.apply_permission_change hiện dùng NOT EXISTS trước INSERT cho matrix_grant; vì PK là (role_id,module_id,action), nếu action đã tồn tại với scope khác thì có thể gặp duplicate key. Cần đổi sang upsert có chủ đích và kiểm tra payload trước khi áp dụng.
