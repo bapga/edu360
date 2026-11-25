@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import ModulePage from './pages/ModulePage'
+import OrganizationPage from './pages/OrganizationPage'
 import Login from './pages/Login'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './contexts/PermissionContext'
@@ -21,6 +22,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Dashboard />} />
+        <Route path="to-chuc" element={<OrganizationPage />} />
         <Route path="*" element={<ModulePage />} />
       </Route>
     </Routes>
