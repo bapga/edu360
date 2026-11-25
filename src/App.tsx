@@ -15,10 +15,13 @@ function LoadingScreen() {
 
 export default function App() {
   const { user, loading } = useAuth()
-  const { isBgh, loading: permissionsLoading } = usePermissions()
+  const { isBgh, permissions, profileStatus, error: permissionError, loading: permissionsLoading } = usePermissions()
   if (loading) return <LoadingScreen />
   if (!user) return <Login />
   if (permissionsLoading) return <LoadingScreen />
+  if (permissionError) return <div className="flex min-h-screen items-center justify-center p-6 text-center"><div><h1 className="font-semibold text-red-700">Không thể xác minh quyền truy cập</h1><p className="mt-2 text-sm text-slate-500">{permissionError}</p></div></div>
+  if (profileStatus !== 'active') return <div className="flex min-h-screen items-center justify-center p-6 text-center"><div><h1 className="font-semibold text-navy-900">Tài khoản chưa được kích hoạt</h1><p className="mt-2 text-sm text-slate-500">Vui lòng liên hệ quản trị hệ thống.</p></div></div>
+  if (permissions.length === 0) return <div className="flex min-h-screen items-center justify-center p-6 text-center"><div><h1 className="font-semibold text-navy-900">Chưa được phân quyền</h1><p className="mt-2 text-sm text-slate-500">Tài khoản chưa có quyền truy cập phân hệ nào. Vui lòng liên hệ Admin.</p></div></div>
   if (isBgh && window.location.pathname === '/') return <Navigate to="/bao-cao" replace />
   return (
     <Routes>
