@@ -86,6 +86,7 @@ export default function OrganizationPage() {
     .map((type) => ({ type, items: filtered.filter((unit) => unit.unit_type === type) }))
     .filter((group) => group.items.length > 0), [filtered])
 
+  const unitById = useMemo(() => new Map(units.map((unit) => [unit.id, unit])), [units])
   const activeCount = units.filter((unit) => unit.is_active).length
   const departmentCount = units.filter((unit) => unit.unit_type === 'department' && unit.is_active).length
   const facultyCount = units.filter((unit) => unit.unit_type === 'faculty' && unit.is_active).length
@@ -251,7 +252,7 @@ export default function OrganizationPage() {
                         </span>
                       </div>
                       {unit.parent_id && (
-                        <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">Có đơn vị cấp trên</p>
+                        <p className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">Trực thuộc: {unitById.get(unit.parent_id)?.name ?? "Đơn vị khác"}</p>
                       )}
                       {canUpdate && <button type="button" onClick={() => openEdit(unit)} className="btn-ghost mt-3 w-full">Chỉnh sửa</button>}
                     </article>
