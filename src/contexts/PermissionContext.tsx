@@ -76,7 +76,7 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
 
   const roleCodes = permissions.map((p) => p.role_code.toUpperCase())
   const isSystemAdmin = roleCodes.includes('SYSTEM_ADMIN')
-  const isBgh = roleCodes.includes('BGH') && !isSystemAdmin
+  const isBgh = roleCodes.includes('BAN_GIAM_HIEU') && !isSystemAdmin
 
   const value = useMemo<PermissionState>(() => ({
     permissions, profileStatus, loading, error, refresh, isSystemAdmin, isBgh,
