@@ -12,11 +12,11 @@ const moduleByPath: Record<string, string> = {
 interface Props { collapsed: boolean; mobileOpen: boolean; onToggleCollapse: () => void; onCloseMobile: () => void }
 
 export default function Sidebar({ collapsed, mobileOpen, onToggleCollapse, onCloseMobile }: Props) {
-  const { can, loading } = usePermissions()
+  const { can, loading, isBgh } = usePermissions()
   const visibleGroups = navGroups.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
-      if (item.path === '/') return true
+      if (item.path === '/') return !isBgh
       if (loading) return false
       if (item.path === '/nguoi-hoc') return can('students', 'view') || can('grades', 'view')
       return can(moduleByPath[item.path] ?? '', 'view')
