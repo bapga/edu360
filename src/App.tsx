@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import ModulePage from './pages/ModulePage'
 import OrganizationPage from './pages/OrganizationPage'
 import StaffPage from './pages/StaffPage'
+import SystemAdminPage from './pages/SystemAdminPage'
 import Login from './pages/Login'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './contexts/PermissionContext'
@@ -25,6 +26,7 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="to-chuc" element={<OrganizationPage />} />
         <Route path="nhan-su" element={<StaffPage />} />
+        <Route path="quan-tri" element={<SystemAdminPage />} />
         <Route path="*" element={<ModulePage />} />
       </Route>
     </Routes>
