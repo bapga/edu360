@@ -125,6 +125,10 @@ export default function SystemAdminPage() {
     let payload: Record<string, unknown>
     if (changeType === 'matrix_grant' || changeType === 'matrix_revoke') {
       if (!roleCode || !moduleCode) return
+      if (myRoleCodes.includes(roleCode.toLowerCase())) {
+        setMessage('Không thể đề xuất thay đổi ma trận quyền của vai trò mà bạn đang giữ.')
+        return
+      }
       const existing = matrix.find((item) => item.role_id === selectedRole?.id && item.module_id === selectedModule?.id && item.action === action)
       if (changeType === 'matrix_grant' && existing) {
         setMessage(existing.data_scope === dataScope
