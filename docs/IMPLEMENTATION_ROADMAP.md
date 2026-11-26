@@ -74,9 +74,9 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 - Kiểm thử Admin bằng JWT mô phỏng: 91 quyền trên 13 module; đọc được 10 vai trò, 14 module, 9 đơn vị và nhật ký.
 - Kiểm thử quy trình hai Admin trong transaction rollback: chặn người duyệt thay đổi role mình đang giữ; phê duyệt thay đổi role khác thành công.
 - Migration file đã lưu tại `supabase/migrations/20261126153433_production_rbac_reporting_hardening.sql`.
-- GitHub Actions CI #168 trước migration-file rename/docs update: PASS; gồm npm ci, audit gate high, typecheck, production build. Cần CI mới sau các commit cuối.
+- GitHub Actions CI #179 trên nhánh trước merge: PASS; CI #180 trên `main` commit `fcd0e66`: PASS — npm ci, audit gate high, typecheck, production build.
 - Dependency audit gần nhất: 0 vulnerabilities.
-- Vercel Preview commit `b989216`: READY; endpoint trả HTTP 200. Chưa phải browser E2E.
+- Vercel Preview commit `deddeee`: READY; sau đó PR #2 đã squash-merge vào `main` và production deployment commit `fcd0e66` READY.
 - Vite 6.4.6, React Router 7.18.7, PostCSS selector parser 6.1.5; Zod 3 không dùng đã loại bỏ.
 - Vite dev server chỉ bind 127.0.0.1; route pages lazy-load; main chunk khoảng 473 KB.
 - Vercel còn cảnh báo esbuild install script chưa allowScripts và npm config `cache-dir` không nhận diện.
@@ -84,7 +84,9 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 - Supabase table inventory ghi nhận `private.c8_removed_role_permissions` có 36 dòng lưu trữ, RLS OFF; schema private có USAGE cho authenticated nhưng role anon/authenticated không có SELECT grant trên bảng. Không tự bật RLS vì cần xác định policy/luồng đọc phù hợp.
 - Production hiện có 2 tài khoản active, cả hai đều `system_admin`; chưa có tài khoản BGH/giáo viên/chuyên viên được gán. Chưa có staff/assignments.
 - Các phân hệ tuyển sinh, người học, đào tạo/điểm, tài chính, tài sản, văn bản, điều hành vẫn là thiết kế; `ModulePage` hiện là placeholder, chưa đủ điều kiện vận hành.
-- Chưa merge PR và chưa thay đổi production Vercel deployment; bản production hiện vẫn chạy commit main cũ.
+- PR #2 đã squash-merge: `fcd0e66e33ea420a43e215ad4e58140eadb5e821`.
+- Production Vercel đã deploy thành công tại https://thndongnamna.vercel.app; endpoint HTML, main JS, CSS và 5 lazy-loaded JS chunks đều trả HTTP 200.
+- Đây là đợt phát hành nền tảng phân quyền/quản trị; chưa phải nghiệm thu toàn bộ hệ thống quản lý đào tạo.
 ## Chuẩn giao diện
 
 - Giao diện tiếng Việt, hiện đại, thân thiện, trực quan như SaaS.
