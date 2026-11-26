@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Check, Clock3, LockKeyhole, RefreshCw, ShieldCheck, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
@@ -70,7 +70,9 @@ export default function SystemAdminPage() {
   const [reason, setReason] = useState('')
   const [decisionNotes, setDecisionNotes] = useState<Record<string, string>>({})
 
+  const loadRequestId = useRef(0)
   const loadData = useCallback(async () => {
+    const requestId = ++loadRequestId.current
     if (!supabase || !user) {
       setError('Không có phiên đăng nhập hoặc chưa cấu hình Supabase.')
       setLoading(false)
@@ -78,20 +80,20 @@ export default function SystemAdminPage() {
     }
     setLoading(true)
     setError(null)
-    const [rolesResult, modulesResult, profilesResult, unitsResult, requestsResult, matrixResult, myRolesResult, auditResult] = await Promise.all([
-      supabase.from('roles').select('id,code,name').order('name'),
-      supabase.from('modules').select('id,code,name').order('sort_order'),
-      supabase.from('profiles').select('id,full_name,email,status').order('full_name'),
-      supabase.from('org_units').select('id,code,name').is('deleted_at', null).eq('is_active', true).order('sort_order'),
-      supabase.from('permission_change_requests').select('id,change_type,payload,reason,status,requested_by,requested_at,decided_by,decided_at,decision_note').order('requested_at', { ascending: false }),
-      supabase.from('role_permissions').select('role_id,module_id,action,data_scope,roles(code,name),modules(code,name)'),
-      supabase.from('user_roles').select('roles!user_roles_role_id_fkey(code)').eq('user_id', user.id),
-      supabase.from('audit_logs').select('id,occurred_at,actor_id,action,table_name,record_id').order('occurred_at', { ascending: false }).limit(100),
-    ])
-    const failure = rolesResult.error || modulesResult.error || profilesResult.error || unitsResult.error || requestsResult.error || matrixResult.error || myRolesResult.error || auditResult.error
-    if (failure) {
-      setError(failure.message)
-    } else {
+    try {
+      const [rolesResult, modulesResult, profilesResult, unitsResult, requestsResult, matrixResult, myRolesResult, auditResult] = await Promise.all([
+        supabase.from('roles').select('id,code,name').order('name'),
+        supabase.from('modules').select('id,code,name').order('sort_order'),
+        supabase.from('profiles').select('id,full_name,email,status').order('full_name'),
+        supabase.from('org_units').select('id,code,name').is('deleted_at', null).eq('is_active', true).order('sort_order'),
+        supabase.from('permission_change_requests').select('id,change_type,payload,reason,status,requested_by,requested_at,decided_by,decided_at,decision_note').order('requested_at', { ascending: false }),
+        supabase.from('role_permissions').select('role_id,module_id,action,data_scope,roles(code,name),modules(code,name)'),
+        supabase.from('user_roles').select('roles!user_roles_role_id_fkey(code)').eq('user_id', user.id),
+        supabase.from('audit_logs').select('id,occurred_at,actor_id,action,table_name,record_id').order('occurred_at', { ascending: false }).limit(100),
+      ])
+      if (requestId !== loadRequestId.current) return
+      const failure = rolesResult.error || modulesResult.error || profilesResult.error || unitsResult.error || requestsResult.error || matrixResult.error || myRolesResult.error || auditResult.error
+      if (failure) throw failure
       setRoles((rolesResult.data ?? []) as Role[])
       setModules((modulesResult.data ?? []) as Module[])
       setProfiles((profilesResult.data ?? []) as Profile[])
@@ -102,11 +104,18 @@ export default function SystemAdminPage() {
       setMyRoleCodes((myRolesResult.data ?? []).map((row) => (row.roles as unknown as { code: string } | null)?.code?.toLowerCase()).filter((code): code is string => Boolean(code)))
       if (!roleCode && rolesResult.data?.length) setRoleCode(rolesResult.data[0].code)
       if (!moduleCode && modulesResult.data?.length) setModuleCode(modulesResult.data[0].code)
+    } catch (cause) {
+      if (requestId !== loadRequestId.current) return
+      setError(cause instanceof Error ? cause.message : 'Không thể tải dữ liệu quản trị hệ thống.')
+    } finally {
+      if (requestId === loadRequestId.current) setLoading(false)
     }
-    setLoading(false)
   }, [user, roleCode, moduleCode])
 
-  useEffect(() => { void loadData() }, [loadData])
+  useEffect(() => {
+    void loadData()
+    return () => { loadRequestId.current += 1 }
+  }, [loadData])
 
   const pending = useMemo(() => requests.filter((request) => request.status === 'pending'), [requests])
   const history = useMemo(() => requests.filter((request) => request.status !== 'pending'), [requests])
