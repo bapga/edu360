@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { BarChart3, BookOpen, ClipboardList, GraduationCap, RefreshCw, Users } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -35,26 +35,47 @@ export default function ReportsPage() {
   const [metrics, setMetrics] = useState<ReportMetric[]>([])
   const [loading, setLoading] = useState(true)
   const [summaryReady, setSummaryReady] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const requestId = useRef(0)
 
-  async function loadSummary() {
+  const loadSummary = useCallback(async () => {
+    const currentRequest = ++requestId.current
+    setLoading(true)
+    setLoadError(null)
     if (!supabase) {
+      setMetrics([])
       setSummaryReady(false)
+      setLoadError('Chưa cấu hình kết nối cơ sở dữ liệu.')
       setLoading(false)
       return
     }
-    setLoading(true)
-    const { data, error } = await supabase.rpc('reports_summary')
-    if (error) {
+    try {
+      const { data, error } = await supabase.rpc('reports_summary')
+      if (currentRequest !== requestId.current) return
+      if (error) throw error
+      if (!Array.isArray(data)) throw new Error('Dữ liệu báo cáo trả về không đúng định dạng.')
+      const validMetrics = (data as ReportMetric[]).filter((metric) =>
+        typeof metric.metric_code === 'string' &&
+        typeof metric.metric_label === 'string' &&
+        (metric.metric_value === null || (typeof metric.metric_value === 'number' && Number.isFinite(metric.metric_value))) &&
+        (metric.availability === 'available' || metric.availability === 'not_available')
+      )
+      setMetrics(validMetrics)
+      setSummaryReady(true)
+    } catch (cause) {
+      if (currentRequest !== requestId.current) return
       setMetrics([])
       setSummaryReady(false)
-    } else {
-      setMetrics((data ?? []) as ReportMetric[])
-      setSummaryReady(true)
+      setLoadError(cause instanceof Error ? cause.message : 'Không thể tải dữ liệu báo cáo.')
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false)
     }
-    setLoading(false)
-  }
+  }, [])
 
-  useEffect(() => { void loadSummary() }, [])
+  useEffect(() => {
+    void loadSummary()
+    return () => { requestId.current += 1 }
+  }, [loadSummary])
 
   return (
     <div className="space-y-6">
@@ -79,10 +100,10 @@ export default function ReportsPage() {
             {metrics.map((metric) => <div key={metric.metric_code} className="rounded-xl border border-slate-200 p-4">
               <div className="text-sm text-slate-500">{metric.metric_label}</div>
               <div className="mt-2 text-2xl font-semibold text-navy-900">{metric.availability === 'available' && metric.metric_value !== null ? metric.metric_value.toLocaleString('vi-VN') : 'Chưa có nguồn dữ liệu'}</div>
-              {metric.availability === 'available' && <div className="mt-1 text-xs text-slate-400">Cập nhật: {new Date(metric.as_of).toLocaleString('vi-VN')}</div>}
+              {metric.availability === 'available' && metric.as_of && Number.isFinite(Date.parse(metric.as_of)) && <div className="mt-1 text-xs text-slate-400">Cập nhật: {new Date(metric.as_of).toLocaleString('vi-VN')}</div>}
             </div>)}
           </div>
-        ) : <div className="mt-4 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">RPC tổng hợp báo cáo chưa được triển khai trên database. Chỉ hiển thị khi migration báo cáo được phê duyệt và áp dụng.</div>}
+        ) : <div role="alert" className="mt-4 rounded-lg bg-amber-50 p-4 text-sm text-amber-800">{loadError ? `Không thể tải báo cáo: ${loadError}` : 'RPC tổng hợp báo cáo chưa được triển khai trên database. Chỉ hiển thị khi migration báo cáo được phê duyệt và áp dụng.'}</div>}
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
