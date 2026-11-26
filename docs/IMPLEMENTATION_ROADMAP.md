@@ -51,7 +51,7 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 | Hành chính/tài chính/tài sản | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
 | AI-OFFICE | Chưa triển khai | Chờ nguồn dữ liệu và kiểm soát truy cập |
 
-Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 4–5 (Tuyển sinh và Người học), gồm bảng dữ liệu, workflow nhập học, RLS/Storage, giao diện và kiểm thử chấp nhận, được ghi tại docs/PHASE_04_05_ADMISSIONS_STUDENTS.md. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
+Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản) được ghi tại docs/PHASE_03_ADMIN_FINANCE_ASSETS.md; Chặng 4–5 (Tuyển sinh và Người học) được ghi tại docs/PHASE_04_05_ADMISSIONS_STUDENTS.md. Các tài liệu này là thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
 
 ## Lộ trình triển khai
 
@@ -60,7 +60,7 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 | 0 | Nền tảng, đăng nhập, hồ sơ, vai trò, quyền, nhật ký | Auth ổn định; fail-closed; ma trận quyền thống nhất frontend/RLS |
 | 1 | Cơ cấu tổ chức | Phòng/khoa/đơn vị, cây tổ chức, trạng thái và lịch sử |
 | 2 | Nhân sự | Hồ sơ gốc, hợp đồng, quá trình công tác, phân công, đơn vị |
-| 3 | Hành chính - Kế toán, tài sản | Văn bản, quy trình xử lý, tài chính và tài sản theo quyền |
+| 3 | Hành chính - Kế toán, tài sản | Đã có thiết kế chi tiết; cần chốt biểu mẫu/quy chế, ERD, RLS/Storage/RPC và phê duyệt DB |
 | 4 | Tuyển sinh | Đợt tuyển sinh, chỉ tiêu, hồ sơ thí sinh, xét tuyển, nhập học |
 | 5 | Người học | Hồ sơ gốc, lớp/khóa, biến động, chuyên cần, rèn luyện |
 | 6 | Đào tạo, giảng dạy, điểm | Nghề/chương trình/môn-mô-đun, kế hoạch, TKB, phân công, nhập điểm, khóa điểm, xét kết quả |
