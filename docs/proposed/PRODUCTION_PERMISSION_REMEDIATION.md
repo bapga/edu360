@@ -34,7 +34,7 @@ begin
   end if;
 end $$;
 
--- Admin quản lý toàn bộ module và action.
+-- Admin quản lý toàn bộ module nghiệp vụ và action đã được phê duyệt; AI Office không được cấp mặc định.
 insert into public.role_permissions (role_id, module_id, action, data_scope)
 select r.id, m.id, a.action, 'all'
 from public.roles r
@@ -44,6 +44,8 @@ cross join (values
   ('approve'), ('import'), ('export')
 ) as a(action)
 where r.code = 'system_admin'
+  -- AI Office remains disabled until separate provider, privacy and budget approval.
+  and m.code <> 'ai_office'
 on conflict (role_id, module_id, action)
 do update set data_scope = excluded.data_scope, updated_at = now();
 
