@@ -85,3 +85,7 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 - TypeScript, lint/test (khi có), production build đều phải đạt.
 - Kiểm thử không làm hỏng phân hệ khác và không tạo dữ liệu trùng.
 - Chỉ merge/deploy sau khi người dùng phê duyệt.
+
+
+## Kế hoạch phát hành và migration
+Toàn bộ cổng bảo mật, thứ tự migration, nghiệm thu theo JWT, rollback và ranh giới phê duyệt được tổng hợp tại `docs/RELEASE_READINESS_AND_MIGRATION_PLAN.md`. Đây là checklist phát hành; các P0 production đang chặn phát hành cho đến khi được xử lý và kiểm thử.
