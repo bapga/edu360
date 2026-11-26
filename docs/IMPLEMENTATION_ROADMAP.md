@@ -49,9 +49,9 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 | Người học | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Đào tạo/giảng dạy/điểm | Đã hoàn tất thiết kế chi tiết Chặng 6 tại `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md` | Chờ đối chiếu biểu mẫu/quy chế, chốt ERD/RLS/RPC và phê duyệt DB |
 | Hành chính/tài chính/tài sản | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
-| AI-OFFICE | Chưa triển khai | Chờ nguồn dữ liệu và kiểm soát truy cập |
+| AI-OFFICE | Đã có thiết kế an toàn Chặng 8 tại `docs/PHASE_08_AI_OFFICE.md`; feature flag mặc định OFF | Chờ chính sách AI, phân loại dữ liệu, provider, ACL, ngân sách và phê duyệt |
 
-Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản), Chặng 4–5 (Tuyển sinh và Người học), Chặng 6 (Đào tạo, Giảng dạy, Thời khóa biểu và Điểm) lần lượt được ghi tại `docs/PHASE_03_ADMIN_FINANCE_ASSETS.md`, `docs/PHASE_04_05_ADMISSIONS_STUDENTS.md`, `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md`. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
+Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản), Chặng 4–5 (Tuyển sinh và Người học), Chặng 6 (Đào tạo, Giảng dạy, Thời khóa biểu và Điểm), Chặng 7 (Điều hành, Công việc, Lịch công tác và Báo cáo), Chặng 8 (AI-OFFICE) lần lượt được ghi tại `docs/PHASE_03_ADMIN_FINANCE_ASSETS.md`, `docs/PHASE_04_05_ADMISSIONS_STUDENTS.md`, `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md`, `docs/PHASE_07_OPERATIONS_TASKS_REPORTS.md`, `docs/PHASE_08_AI_OFFICE.md`. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
 
 ## Lộ trình triển khai
 
@@ -64,7 +64,7 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 | 4 | Tuyển sinh | Đợt tuyển sinh, chỉ tiêu, hồ sơ thí sinh, xét tuyển, nhập học |
 | 5 | Người học | Hồ sơ gốc, lớp/khóa, biến động, chuyên cần, rèn luyện |
 | 6 | Đào tạo, giảng dạy, điểm | Nghề/chương trình/môn-mô-đun, kế hoạch, TKB, phân công, nhập điểm, khóa điểm, xét kết quả |
-| 7 | Điều hành và báo cáo | Công việc, lịch công tác, báo cáo tổng hợp theo quyền |
+| 7 | Điều hành và báo cáo | Đã có thiết kế chi tiết Chặng 7 tại `docs/PHASE_07_OPERATIONS_TASKS_REPORTS.md` | Chờ chốt quy chế giao việc/lịch và chỉ số báo cáo, RLS/RPC, phê duyệt DB |
 | 8 | AI-OFFICE | Hỏi đáp dữ liệu được phép, soạn thảo/tổng hợp có kiểm soát truy cập |
 
 ## Chuẩn giao diện
