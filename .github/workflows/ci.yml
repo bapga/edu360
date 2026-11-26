@@ -1,8 +1,5 @@
 name: EDU360 CI
 
-permissions:
-  contents: write
-
 on:
   push:
     branches:
@@ -35,21 +32,3 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
-      - name: Commit generated lockfile
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/edu360-permission-hardening'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(deps): add npm lockfile"
-            git push origin "HEAD:$GITHUB_REF_NAME"
-          fi
-      - name: Upload generated lockfile
-        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/edu360-permission-hardening'
-        uses: actions/upload-artifact@v4
-        with:
-          name: edu360-package-lock
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 1
