@@ -239,6 +239,10 @@ declare
   v_action text;
   v_scope text;
 begin
+  if p_payload is null or pg_catalog.jsonb_typeof(p_payload) <> 'object' then
+    raise exception 'invalid permission change payload';
+  end if;
+
   if p_type in ('matrix_grant', 'matrix_revoke') then
     select id into v_role
     from public.roles
@@ -253,10 +257,10 @@ begin
 
     if v_role is null then raise exception 'unknown role code'; end if;
     if v_module is null then raise exception 'unknown module code'; end if;
-    if v_action not in ('view','create','update','delete','approve','import','export') then
+    if v_action is null or v_action not in ('view','create','update','delete','approve','import','export') then
       raise exception 'invalid action';
     end if;
-    if v_scope not in ('all','unit','own') then raise exception 'invalid data scope'; end if;
+    if v_scope is null or v_scope not in ('all','unit','own') then raise exception 'invalid data scope'; end if;
 
     if p_type = 'matrix_grant' then
       insert into public.role_permissions (role_id, module_id, action, data_scope)
@@ -279,8 +283,9 @@ begin
     where code = p_payload->>'role_code';
 
     if v_role is null then raise exception 'unknown role code'; end if;
-    v_user := (p_payload->>'user_id')::uuid;
+    v_user := nullif(p_payload->>'user_id','')::uuid;
     v_unit := nullif(p_payload->>'org_unit_id','')::uuid;
+    if v_user is null then raise exception 'missing user id'; end if;
 
     if not exists (select 1 from public.profiles where id = v_user) then
       raise exception 'unknown user';
