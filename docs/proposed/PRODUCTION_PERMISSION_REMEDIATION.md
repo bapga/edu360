@@ -287,9 +287,22 @@ begin
     end if;
 
     if p_type = 'role_assign' then
+      -- user_roles has only a surrogate PK(id), no unique constraint on the natural key.
+      -- Serialize identical assignments before checking/inserting.
+      perform pg_catalog.pg_advisory_xact_lock(
+        pg_catalog.hashtextextended(
+          v_user::text || ':' || v_role::text || ':' || coalesce(v_unit::text, '<null>'),
+          0
+        )
+      );
       insert into public.user_roles (user_id, role_id, org_unit_id)
-      values (v_user, v_role, v_unit)
-      on conflict (user_id, role_id, org_unit_id) do nothing;
+      select v_user, v_role, v_unit
+      where not exists (
+        select 1 from public.user_roles ur
+        where ur.user_id = v_user
+          and ur.role_id = v_role
+          and ur.org_unit_id is not distinct from v_unit
+      );
     else
       delete from public.user_roles
       where user_id = v_user
@@ -305,4 +318,4 @@ end
 $function$;
 ~~~
 
-**Lưu ý quan trọng:** trước khi dùng nhánh `role_assign` với `ON CONFLICT`, phải xác minh unique constraint/index của `user_roles` có đúng bộ cột `(user_id, role_id, org_unit_id)`. Nếu không có, thay bằng cơ chế khóa/kiểm tra phù hợp với constraint thật; không tự tạo constraint trong bản vá này.
+**Đã đối chiếu schema production:** `user_roles` chỉ có primary key `id`, không có unique constraint trên `(user_id, role_id, org_unit_id)`. Vì vậy bản dự thảo dùng transaction advisory lock theo bộ khóa tự nhiên rồi mới kiểm tra/tạo assignment; không sử dụng `ON CONFLICT` trên constraint không tồn tại. Vẫn cần kiểm thử race condition và đánh giá các luồng ghi khác trước khi áp dụng.
