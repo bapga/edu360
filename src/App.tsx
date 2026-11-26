@@ -1,6 +1,9 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
+import { useAuth } from './contexts/AuthContext'
+import { usePermissions } from './contexts/PermissionContext'
+
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const ModulePage = lazy(() => import('./pages/ModulePage'))
 const OrganizationPage = lazy(() => import('./pages/OrganizationPage'))
@@ -8,8 +11,6 @@ const StaffPage = lazy(() => import('./pages/StaffPage'))
 const SystemAdminPage = lazy(() => import('./pages/SystemAdminPage'))
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 const Login = lazy(() => import('./pages/Login'))
-import { useAuth } from './contexts/AuthContext'
-import { usePermissions } from './contexts/PermissionContext'
 
 function LoadingScreen() {
   return <div className="flex min-h-screen items-center justify-center bg-slate-50"><div className="text-center"><div className="mx-auto h-9 w-9 animate-spin rounded-full border-4 border-brand-100 border-t-brand-600" /><p className="mt-4 text-sm text-slate-500">Đang kiểm tra phiên đăng nhập...</p></div></div>
@@ -27,16 +28,16 @@ export default function App() {
   if (isBgh && window.location.pathname === '/') return <Navigate to="/bao-cao" replace />
   return (
     <Suspense fallback={<LoadingScreen />}>
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Dashboard />} />
-        <Route path="to-chuc" element={<OrganizationPage />} />
-        <Route path="nhan-su" element={<StaffPage />} />
-        <Route path="quan-tri" element={<SystemAdminPage />} />
-        <Route path="bao-cao" element={<ReportsPage />} />
-        <Route path="*" element={<ModulePage />} />
-      </Route>
-    </Routes>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="to-chuc" element={<OrganizationPage />} />
+          <Route path="nhan-su" element={<StaffPage />} />
+          <Route path="quan-tri" element={<SystemAdminPage />} />
+          <Route path="bao-cao" element={<ReportsPage />} />
+          <Route path="*" element={<ModulePage />} />
+        </Route>
+      </Routes>
     </Suspense>
   )
 }
