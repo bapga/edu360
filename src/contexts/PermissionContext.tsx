@@ -22,6 +22,30 @@ interface PermissionState {
   isBgh: boolean
 }
 const PermissionContext = createContext<PermissionState | null>(null)
+const permissionActions = new Set<PermissionAction>(['view', 'create', 'update', 'delete', 'approve', 'import', 'export'])
+const dataScopes = new Set<PermissionRow['data_scope']>(['all', 'unit', 'own'])
+
+function parsePermissions(value: unknown): PermissionRow[] {
+  if (!Array.isArray(value)) throw new Error('Dữ liệu phân quyền trả về không đúng định dạng.')
+  return value.map((item) => {
+    if (!item || typeof item !== 'object') throw new Error('Bản ghi phân quyền không hợp lệ.')
+    const row = item as Record<string, unknown>
+    if (
+      typeof row.module_code !== 'string' || !row.module_code.trim() ||
+      typeof row.role_code !== 'string' || !row.role_code.trim() ||
+      typeof row.action !== 'string' || !permissionActions.has(row.action as PermissionAction) ||
+      typeof row.data_scope !== 'string' || !dataScopes.has(row.data_scope as PermissionRow['data_scope']) ||
+      (row.org_unit_id !== null && typeof row.org_unit_id !== 'string')
+    ) throw new Error('Bản ghi phân quyền chứa trường không hợp lệ.')
+    return {
+      module_code: row.module_code,
+      action: row.action as PermissionAction,
+      data_scope: row.data_scope as PermissionRow['data_scope'],
+      org_unit_id: row.org_unit_id as string | null,
+      role_code: row.role_code,
+    }
+  })
+}
 
 export function PermissionProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
@@ -34,11 +58,19 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     const requestId = ++requestIdRef.current
-    if (!supabase || !user) {
+    if (!user) {
       loadedUserIdRef.current = null
       setPermissions([])
       setProfileStatus(null)
       setError(null)
+      setLoading(false)
+      return
+    }
+    if (!supabase) {
+      loadedUserIdRef.current = null
+      setPermissions([])
+      setProfileStatus(null)
+      setError('Chưa cấu hình kết nối cơ sở dữ liệu.')
       setLoading(false)
       return
     }
@@ -49,13 +81,13 @@ export function PermissionProvider({ children }: { children: ReactNode }) {
       const { data: profile, error: profileError } = await supabase
         .from('profiles').select('status').eq('id', user.id).maybeSingle()
       if (profileError) throw profileError
-      if (!profile) throw new Error('Tài khoản chưa có hồ sơ trong hệ thống.')
+      if (!profile || typeof profile.status !== 'string') throw new Error('Tài khoản chưa có hồ sơ hợp lệ trong hệ thống.')
       const nextStatus = profile.status
       let nextPermissions: PermissionRow[] = []
       if (nextStatus === 'active') {
         const { data, error: permissionError } = await supabase.rpc('my_permissions')
         if (permissionError) throw permissionError
-        nextPermissions = (data ?? []) as PermissionRow[]
+        nextPermissions = parsePermissions(data)
       }
       if (requestId !== requestIdRef.current) return
       setProfileStatus(nextStatus)
