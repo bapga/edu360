@@ -47,11 +47,11 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 | Báo cáo | Trang BGH riêng, không hiển thị số liệu giả | Chưa có report RPC/view và chưa có bảng nghiệp vụ người học/đào tạo |
 | Tuyển sinh | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Người học | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
-| Đào tạo/giảng dạy/điểm | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
+| Đào tạo/giảng dạy/điểm | Đã hoàn tất thiết kế chi tiết Chặng 6 tại `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md` | Chờ đối chiếu biểu mẫu/quy chế, chốt ERD/RLS/RPC và phê duyệt DB |
 | Hành chính/tài chính/tài sản | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
 | AI-OFFICE | Chưa triển khai | Chờ nguồn dữ liệu và kiểm soát truy cập |
 
-Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản) được ghi tại docs/PHASE_03_ADMIN_FINANCE_ASSETS.md; Chặng 4–5 (Tuyển sinh và Người học) được ghi tại docs/PHASE_04_05_ADMISSIONS_STUDENTS.md. Các tài liệu này là thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
+Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản), Chặng 4–5 (Tuyển sinh và Người học), Chặng 6 (Đào tạo, Giảng dạy, Thời khóa biểu và Điểm) lần lượt được ghi tại `docs/PHASE_03_ADMIN_FINANCE_ASSETS.md`, `docs/PHASE_04_05_ADMISSIONS_STUDENTS.md`, `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md`. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
 
 ## Lộ trình triển khai
 
