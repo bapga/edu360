@@ -67,7 +67,17 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 | 7 | Điều hành và báo cáo | Đã có thiết kế chi tiết Chặng 7 tại `docs/PHASE_07_OPERATIONS_TASKS_REPORTS.md` | Chờ chốt quy chế giao việc/lịch và chỉ số báo cáo, RLS/RPC, phê duyệt DB |
 | 8 | AI-OFFICE | Hỏi đáp dữ liệu được phép, soạn thảo/tổng hợp có kiểm soát truy cập |
 
-## Kiểm tra kỹ thuật gần nhất (2026-11-26)\n\n- Commit nhánh tính năng: `7b3d87ef91947ec0c6fa2e9d8454f6ed96ae5f85`.\n- GitHub Actions EDU360 CI #129: PASS (install, typecheck, production build).\n- Vercel Preview tương ứng: READY — https://thndongnamna-5oqdmtn18-dangquangphuchungbap-2025.vercel.app.\n- Vercel Preview build ghi nhận 5 lỗ hổng dependency (3 moderate, 2 high), và cảnh báo install script của esbuild; cần audit chi tiết và nâng cấp có kiểm thử trước release.\n- Không có package-lock.json trong nhánh hiện tại; CI dùng `npm install`, vì vậy dependency resolution chưa được khóa tái lập.\n- Chưa có kiểm thử browser/login với tài khoản thật; chưa kiểm thử RLS trực tiếp theo JWT từng vai trò.\n- Không có thay đổi schema/dữ liệu Supabase, không merge và không triển khai production.\n\n## Chuẩn giao diện
+## Kiểm tra kỹ thuật gần nhất (2026-11-26)
+
+- Commit nhánh tính năng: `43cf8174f8e642f246a4b965370d2c8ea9cb3c2f`.
+- GitHub Actions EDU360 CI #136: PASS (install, typecheck, production build).
+- Vercel Preview tương ứng: READY — https://thndongnamna-b9381hpi4-dangquangphuchungbap-2025.vercel.app.
+- Đã nâng Vite lên 6.4.6 (bản vá trong nhánh hỗ trợ bảo mật), plugin React lên 4.3.4 và chỉ bind dev server tại 127.0.0.1. npm install giảm từ 5 xuống 3 cảnh báo lỗ hổng (2 moderate, 1 high); cần lấy audit JSON và xử lý phần còn lại trước release.
+- Vẫn chưa có package-lock.json; CI dùng `npm install`, dependency resolution chưa được khóa tái lập.
+- Chưa có kiểm thử browser/login với tài khoản thật; chưa kiểm thử RLS trực tiếp theo JWT từng vai trò.
+- Không có thay đổi schema/dữ liệu Supabase, không merge và không triển khai production.
+
+## Chuẩn giao diện
 
 - Giao diện tiếng Việt, hiện đại, thân thiện, trực quan như SaaS.
 - Dashboard có số liệu/biểu đồ phù hợp quyền của người dùng.
