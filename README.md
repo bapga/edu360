@@ -47,11 +47,11 @@ Không commit tệp `.env` hoặc bất kỳ bí mật nào.
 
 ## Tình trạng triển khai
 
-Repository hiện có khung ứng dụng, đăng nhập Supabase, quản lý phiên đăng nhập, dashboard, sidebar và điều hướng các phân hệ. Cơ chế kiểm tra trạng thái hồ sơ, nạp quyền từ RPC, lọc menu theo quyền và các phân hệ nghiệp vụ đang tiếp tục được hoàn thiện.
+Ứng dụng hiện có đăng nhập Supabase, quản lý phiên, dashboard, điều hướng theo quyền, quản trị RBAC, cơ cấu tổ chức, nhân sự và trang báo cáo tổng hợp. Migration RBAC production `20261126153433_production_rbac_reporting_hardening` đã áp dụng: Admin có quyền quản trị các module nghiệp vụ (trừ AI Office), BGH chỉ có `reports.view`, metadata bị giới hạn bằng RLS. Các phân hệ tuyển sinh, người học, đào tạo/điểm, tài chính, tài sản, văn bản và điều hành vẫn đang trong giai đoạn triển khai; route chưa có nghiệp vụ được hiển thị là đang xây dựng, không dùng dữ liệu giả. Xem `docs/IMPLEMENTATION_ROADMAP.md` để biết chính xác phạm vi đã chạy và các cổng phát hành còn lại.
 
 ## Nguyên tắc phát triển
 
 - Tiếp tục trên repository hiện có, không tạo dự án thay thế.
-- Không tự ý thay đổi schema, migration, RLS, dữ liệu hoặc quyền trong Supabase.
+- Mọi thay đổi schema, migration, RLS, dữ liệu hoặc quyền production phải có phê duyệt và được ghi thành migration có thể truy vết.
 - Không đưa dữ liệu demo vào quy trình production.
 - Mọi thay đổi cần được kiểm tra TypeScript, test phù hợp và production build trước khi phát hành.
