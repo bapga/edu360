@@ -40,7 +40,7 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 
 | Phân hệ | Tình trạng nhánh tính năng | Chặn phát hành |
 |---|---|---|
-| Đăng nhập và quyền | Frontend guards; permission RPC payload được kiểm tra chặt; CI #129 PASS, Preview READY | Cần sửa RLS metadata và role matrix production; chưa test tài khoản thật |
+| Đăng nhập và quyền | Frontend guards; permission RPC payload được kiểm tra chặt; CI #163–#164 PASS trước cập nhật audit gate, Preview READY | Cần sửa RLS metadata và role matrix production; chưa test tài khoản thật |
 | Quản trị hệ thống | Ma trận quyền, request/approval queue, lịch sử, audit viewer; đã có bản SQL dự thảo vá separation-of-duty và upsert scope | SQL chưa áp dụng; cần kiểm tra quyền EXECUTE, test hai Admin và xác nhận quy trình quản trị độc lập |
 | Cơ cấu tổ chức | Trang đọc/ghi theo permission, tìm kiếm/lọc, kiểm soát cha-con | Quyền org chưa cấp cho system_admin trong DB; cần kiểm thử tài khoản |
 | Nhân sự | Danh sách, hồ sơ, phân công, kết thúc phân công | Chưa có dữ liệu; cần kiểm thử RLS theo scope |
@@ -69,15 +69,19 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 
 ## Kiểm tra kỹ thuật gần nhất (2026-11-26)
 
-- Commit nhánh tính năng: `325d8c68410030717b1be5cf1787dbce09ca420d`.
-- GitHub Actions CI #161 (push) và #162 (pull request): PASS — install bằng `npm ci`, dependency audit, typecheck, production build.
-- Dependency audit: **0 vulnerabilities**.
-- Đã thêm `package-lock.json` để khóa phiên bản dependency.
-- Vercel Preview tương ứng: READY — https://thndongnamna-aoknxkx4f-dangquangphuchungbap-2025.vercel.app.
+- Commit đã kiểm thử gần nhất trước cập nhật CI audit gate: `5791e72e5fabec6a0c57125adf740c014b2fcc76`.
+- GitHub Actions CI #163 (push) và #164 (pull request): PASS — `npm ci`, dependency audit, typecheck, production build.
+- Dependency audit tại lần kiểm tra đó: **0 vulnerabilities**.
+- Đã thêm `package-lock.json`; CI cài đặt tái lập bằng `npm ci`.
+- Vercel Preview của commit `5791e72`: READY — https://thndongnamna-hp83jyar2-dangquangphuchungbap-2025.vercel.app.
+- Preview trả HTTP 200 và HTML ứng dụng có `lang=vi`; đây mới là kiểm tra endpoint/HTML, chưa phải browser E2E hoặc đăng nhập thực tế.
+- Sau đó cập nhật CI để `npm audit --audit-level=high` trở thành cổng bắt buộc; cần chờ CI chạy trên commit mới để xác nhận.
 - Đã nâng Vite lên 6.4.6 và React Router lên 7.18.7; loại bỏ Zod 3 không được sử dụng; override PostCSS selector parser lên bản vá 6.1.5.
 - Vite dev server chỉ bind tại 127.0.0.1.
 - Đã lazy-load route pages; chunk chính giảm xuống khoảng 473 KB và các trang nghiệp vụ tải thành các chunk riêng.
 - npm còn cảnh báo install script esbuild chưa được allowScripts phê duyệt; cần rà soát policy trước release.
+- CI hiện đã bổ sung bước chặn build nếu dependency có lỗ hổng mức high trở lên; chờ kết quả workflow của commit chứa thay đổi này.
+- npm còn cảnh báo install script esbuild chưa được allowScripts phê duyệt; không tự động cho phép script khi chưa xác minh nguồn và nhu cầu.
 - Chưa có kiểm thử browser/login với tài khoản thật; chưa kiểm thử RLS trực tiếp theo JWT từng vai trò.
 - Không có thay đổi schema/dữ liệu Supabase, không merge và không triển khai production.
 
