@@ -69,10 +69,12 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 
 ## Kiểm tra kỹ thuật gần nhất (2026-11-26)
 
-- Commit nhánh tính năng: `43cf8174f8e642f246a4b965370d2c8ea9cb3c2f`.
-- GitHub Actions EDU360 CI #136: PASS (install, typecheck, production build).
-- Vercel Preview tương ứng: READY — https://thndongnamna-b9381hpi4-dangquangphuchungbap-2025.vercel.app.
-- Đã nâng Vite lên 6.4.6 (bản vá trong nhánh hỗ trợ bảo mật), plugin React lên 4.3.4 và chỉ bind dev server tại 127.0.0.1. npm install giảm từ 5 xuống 3 cảnh báo lỗ hổng (2 moderate, 1 high); cần lấy audit JSON và xử lý phần còn lại trước release.
+- Commit nhánh tính năng: `89714ae35b8724e087a4a931765c92a8c8ec7abc`.
+- GitHub Actions EDU360 CI #144: PASS (install, dependency audit, typecheck, production build).
+- Dependency audit CI: **0 vulnerabilities** (0 info, low, moderate, high, critical).
+- Vercel Preview tương ứng: READY — https://thndongnamna-pabwvklat-dangquangphuchungbap-2025.vercel.app.
+- Đã nâng Vite lên 6.4.6 và React Router lên 7.18.7; loại bỏ Zod 3 không được sử dụng; override PostCSS selector parser lên bản vá 6.1.5.
+- Vite dev server chỉ bind tại 127.0.0.1, không expose ra mạng.
 - Vẫn chưa có package-lock.json; CI dùng `npm install`, dependency resolution chưa được khóa tái lập.
 - Chưa có kiểm thử browser/login với tài khoản thật; chưa kiểm thử RLS trực tiếp theo JWT từng vai trò.
 - Không có thay đổi schema/dữ liệu Supabase, không merge và không triển khai production.
