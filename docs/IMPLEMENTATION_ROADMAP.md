@@ -40,18 +40,18 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 
 | Phân hệ | Tình trạng nhánh tính năng | Chặn phát hành |
 |---|---|---|
-| Đăng nhập và quyền | Frontend guards; permission RPC payload được kiểm tra chặt; CI #163–#164 PASS trước cập nhật audit gate, Preview READY | Cần sửa RLS metadata và role matrix production; chưa test tài khoản thật |
-| Quản trị hệ thống | Ma trận quyền, request/approval queue, lịch sử, audit viewer; đã có bản SQL dự thảo vá separation-of-duty và upsert scope | SQL chưa áp dụng; cần kiểm tra quyền EXECUTE, test hai Admin và xác nhận quy trình quản trị độc lập |
-| Cơ cấu tổ chức | Trang đọc/ghi theo permission, tìm kiếm/lọc, kiểm soát cha-con | Quyền org chưa cấp cho system_admin trong DB; cần kiểm thử tài khoản |
-| Nhân sự | Danh sách, hồ sơ, phân công, kết thúc phân công | Chưa có dữ liệu; cần kiểm thử RLS theo scope |
-| Báo cáo | Trang BGH riêng, xử lý lỗi/stale request, kiểm tra cấu trúc payload, không hiển thị số liệu giả | Chưa có report RPC/view production và chưa có bảng nghiệp vụ người học/đào tạo |
+| Đăng nhập và quyền | Frontend guards fail-closed; migration production `20261126153433` đã áp dụng; Admin 91 actions trên 13 module (trừ AI Office); BGH chỉ `reports.view`; RLS metadata đã siết | Chưa có tài khoản BGH thật để nghiệm thu; cần browser E2E/JWT test bằng người dùng thực |
+| Quản trị hệ thống | Ma trận quyền, request/approval queue, lịch sử, audit viewer; RPC đã vá validation, upsert scope, advisory lock và separation-of-duty | Hai Admin hiện đều giữ `system_admin`; thay đổi chính role này cần DBA/bootstrap, không thể tự duyệt; cần kiểm thử UI qua browser |
+| Cơ cấu tổ chức | Trang đọc/ghi theo permission, tìm kiếm/lọc, kiểm soát cha-con; Admin đã có quyền production | Chưa có dữ liệu nhân sự/đơn vị chi tiết và chưa nghiệm thu browser |
+| Nhân sự | Danh sách, hồ sơ, phân công, kết thúc phân công | Bảng staff và assignments đang trống; cần kiểm thử theo đơn vị và bổ sung quy trình hồ sơ/hợp đồng |
+| Báo cáo | RPC `reports_summary` đã áp dụng; BGH chỉ nhận số tổng hợp: 9 đơn vị, 0 nhân sự, 0 phân công; dữ liệu tuyển sinh/người học/đào tạo báo chưa có nguồn | Cần hoàn thiện nguồn dữ liệu và báo cáo nghiệp vụ |
 | Tuyển sinh | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Người học | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Đào tạo/giảng dạy/điểm | Đã hoàn tất thiết kế chi tiết Chặng 6 tại `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md` | Chờ đối chiếu biểu mẫu/quy chế, chốt ERD/RLS/RPC và phê duyệt DB |
 | Hành chính/tài chính/tài sản | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
 | AI-OFFICE | Đã có thiết kế an toàn Chặng 8 tại `docs/PHASE_08_AI_OFFICE.md`; feature flag mặc định OFF | Chờ chính sách AI, phân loại dữ liệu, provider, ACL, ngân sách và phê duyệt |
 
-Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản), Chặng 4–5 (Tuyển sinh và Người học), Chặng 6 (Đào tạo, Giảng dạy, Thời khóa biểu và Điểm), Chặng 7 (Điều hành, Công việc, Lịch công tác và Báo cáo), Chặng 8 (AI-OFFICE) lần lượt được ghi tại `docs/PHASE_03_ADMIN_FINANCE_ASSETS.md`, `docs/PHASE_04_05_ADMISSIONS_STUDENTS.md`, `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md`, `docs/PHASE_07_OPERATIONS_TASKS_REPORTS.md`, `docs/PHASE_08_AI_OFFICE.md`. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
+Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 3 (Hành chính - Kế toán và Tài sản), Chặng 4–5 (Tuyển sinh và Người học), Chặng 6 (Đào tạo, Giảng dạy, Thời khóa biểu và Điểm), Chặng 7 (Điều hành, Công việc, Lịch công tác và Báo cáo), Chặng 8 (AI-OFFICE) lần lượt được ghi tại `docs/PHASE_03_ADMIN_FINANCE_ASSETS.md`, `docs/PHASE_04_05_ADMISSIONS_STUDENTS.md`, `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md`, `docs/PHASE_07_OPERATIONS_TASKS_REPORTS.md`, `docs/PHASE_08_AI_OFFICE.md`. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production cho các phân hệ nghiệp vụ tương ứng.
 
 ## Lộ trình triển khai
 
@@ -69,22 +69,22 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 
 ## Kiểm tra kỹ thuật gần nhất (2026-11-26)
 
-- Commit đã kiểm thử gần nhất trước cập nhật CI audit gate: `5791e72e5fabec6a0c57125adf740c014b2fcc76`.
-- GitHub Actions CI #163 (push) và #164 (pull request): PASS — `npm ci`, dependency audit, typecheck, production build.
-- Dependency audit tại lần kiểm tra đó: **0 vulnerabilities**.
-- Đã thêm `package-lock.json`; CI cài đặt tái lập bằng `npm ci`.
-- Vercel Preview của commit `5791e72`: READY — https://thndongnamna-hp83jyar2-dangquangphuchungbap-2025.vercel.app.
-- Preview trả HTTP 200 và HTML ứng dụng có `lang=vi`; đây mới là kiểm tra endpoint/HTML, chưa phải browser E2E hoặc đăng nhập thực tế.
-- Sau đó cập nhật CI để `npm audit --audit-level=high` trở thành cổng bắt buộc; cần chờ CI chạy trên commit mới để xác nhận.
-- Đã nâng Vite lên 6.4.6 và React Router lên 7.18.7; loại bỏ Zod 3 không được sử dụng; override PostCSS selector parser lên bản vá 6.1.5.
-- Vite dev server chỉ bind tại 127.0.0.1.
-- Đã lazy-load route pages; chunk chính giảm xuống khoảng 473 KB và các trang nghiệp vụ tải thành các chunk riêng.
-- npm còn cảnh báo install script esbuild chưa được allowScripts phê duyệt; cần rà soát policy trước release.
-- CI hiện đã bổ sung bước chặn build nếu dependency có lỗ hổng mức high trở lên; chờ kết quả workflow của commit chứa thay đổi này.
-- npm còn cảnh báo install script esbuild chưa được allowScripts phê duyệt; không tự động cho phép script khi chưa xác minh nguồn và nhu cầu.
-- Chưa có kiểm thử browser/login với tài khoản thật; chưa kiểm thử RLS trực tiếp theo JWT từng vai trò.
-- Không có thay đổi schema/dữ liệu Supabase, không merge và không triển khai production.
-
+- Migration production đã áp dụng: `20261126153433_production_rbac_reporting_hardening`.
+- Kiểm thử SQL trong transaction rollback: BGH chỉ có `reports.view`; không đọc được roles/modules/role_permissions/org_units/user_roles; RPC báo cáo trả aggregate; không có dữ liệu BGH giả được giữ lại.
+- Kiểm thử Admin bằng JWT mô phỏng: 91 quyền trên 13 module; đọc được 10 vai trò, 14 module, 9 đơn vị và nhật ký.
+- Kiểm thử quy trình hai Admin trong transaction rollback: chặn người duyệt thay đổi role mình đang giữ; phê duyệt thay đổi role khác thành công.
+- Migration file đã lưu tại `supabase/migrations/20261126153433_production_rbac_reporting_hardening.sql`.
+- GitHub Actions CI #168 trước migration-file rename/docs update: PASS; gồm npm ci, audit gate high, typecheck, production build. Cần CI mới sau các commit cuối.
+- Dependency audit gần nhất: 0 vulnerabilities.
+- Vercel Preview commit `b989216`: READY; endpoint trả HTTP 200. Chưa phải browser E2E.
+- Vite 6.4.6, React Router 7.18.7, PostCSS selector parser 6.1.5; Zod 3 không dùng đã loại bỏ.
+- Vite dev server chỉ bind 127.0.0.1; route pages lazy-load; main chunk khoảng 473 KB.
+- Vercel còn cảnh báo esbuild install script chưa allowScripts và npm config `cache-dir` không nhận diện.
+- Supabase Security Advisor: leaked-password protection đang OFF; có 9 SECURITY DEFINER RPC warnings (các RPC có guard quyền, cần tiếp tục review định kỳ).
+- Supabase table inventory ghi nhận `private.c8_removed_role_permissions` có 36 dòng lưu trữ, RLS OFF; schema private có USAGE cho authenticated nhưng role anon/authenticated không có SELECT grant trên bảng. Không tự bật RLS vì cần xác định policy/luồng đọc phù hợp.
+- Production hiện có 2 tài khoản active, cả hai đều `system_admin`; chưa có tài khoản BGH/giáo viên/chuyên viên được gán. Chưa có staff/assignments.
+- Các phân hệ tuyển sinh, người học, đào tạo/điểm, tài chính, tài sản, văn bản, điều hành vẫn là thiết kế; `ModulePage` hiện là placeholder, chưa đủ điều kiện vận hành.
+- Chưa merge PR và chưa thay đổi production Vercel deployment; bản production hiện vẫn chạy commit main cũ.
 ## Chuẩn giao diện
 
 - Giao diện tiếng Việt, hiện đại, thân thiện, trực quan như SaaS.
