@@ -36,15 +36,15 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 - `ban_giam_hieu`: chỉ xem báo cáo theo tiêu chí người dùng đã chốt; không quản lý nhân sự/người học/đào tạo, không thao tác ghi, không quản trị/phê duyệt.
 - Giáo viên, chuyên viên, trưởng/phó phòng, trưởng/phó khoa và học sinh: quyền tối thiểu theo nhiệm vụ và phạm vi được giao; mặc định deny nếu chưa được cấp.
 
-## Trạng thái thực hiện ngày 2026-11-25
+## Trạng thái thực hiện ngày 2026-11-26
 
 | Phân hệ | Tình trạng nhánh tính năng | Chặn phát hành |
 |---|---|---|
-| Đăng nhập và quyền | Frontend guards, permission provider, CI đã có | Cần sửa RLS metadata và role matrix production |
-| Quản trị hệ thống | Ma trận quyền, request/approval queue, lịch sử, audit viewer | Cần vá separation-of-duty ở RPC production |
+| Đăng nhập và quyền | Frontend guards; permission RPC payload được kiểm tra chặt; CI #129 PASS, Preview READY | Cần sửa RLS metadata và role matrix production; chưa test tài khoản thật |
+| Quản trị hệ thống | Ma trận quyền, request/approval queue, lịch sử, audit viewer; đã có bản SQL dự thảo vá separation-of-duty và upsert scope | SQL chưa áp dụng; cần kiểm tra quyền EXECUTE, test hai Admin và xác nhận quy trình quản trị độc lập |
 | Cơ cấu tổ chức | Trang đọc/ghi theo permission, tìm kiếm/lọc, kiểm soát cha-con | Quyền org chưa cấp cho system_admin trong DB; cần kiểm thử tài khoản |
 | Nhân sự | Danh sách, hồ sơ, phân công, kết thúc phân công | Chưa có dữ liệu; cần kiểm thử RLS theo scope |
-| Báo cáo | Trang BGH riêng, không hiển thị số liệu giả | Chưa có report RPC/view và chưa có bảng nghiệp vụ người học/đào tạo |
+| Báo cáo | Trang BGH riêng, xử lý lỗi/stale request, kiểm tra cấu trúc payload, không hiển thị số liệu giả | Chưa có report RPC/view production và chưa có bảng nghiệp vụ người học/đào tạo |
 | Tuyển sinh | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Người học | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Đào tạo/giảng dạy/điểm | Đã hoàn tất thiết kế chi tiết Chặng 6 tại `docs/PHASE_06_TRAINING_TEACHING_TIMETABLE_GRADES.md` | Chờ đối chiếu biểu mẫu/quy chế, chốt ERD/RLS/RPC và phê duyệt DB |
@@ -67,7 +67,7 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 | 7 | Điều hành và báo cáo | Đã có thiết kế chi tiết Chặng 7 tại `docs/PHASE_07_OPERATIONS_TASKS_REPORTS.md` | Chờ chốt quy chế giao việc/lịch và chỉ số báo cáo, RLS/RPC, phê duyệt DB |
 | 8 | AI-OFFICE | Hỏi đáp dữ liệu được phép, soạn thảo/tổng hợp có kiểm soát truy cập |
 
-## Chuẩn giao diện
+## Kiểm tra kỹ thuật gần nhất (2026-11-26)\n\n- Commit nhánh tính năng: `7b3d87ef91947ec0c6fa2e9d8454f6ed96ae5f85`.\n- GitHub Actions EDU360 CI #129: PASS (install, typecheck, production build).\n- Vercel Preview tương ứng: READY — https://thndongnamna-5oqdmtn18-dangquangphuchungbap-2025.vercel.app.\n- Vercel Preview build ghi nhận 5 lỗ hổng dependency (3 moderate, 2 high), và cảnh báo install script của esbuild; cần audit chi tiết và nâng cấp có kiểm thử trước release.\n- Không có package-lock.json trong nhánh hiện tại; CI dùng `npm install`, vì vậy dependency resolution chưa được khóa tái lập.\n- Chưa có kiểm thử browser/login với tài khoản thật; chưa kiểm thử RLS trực tiếp theo JWT từng vai trò.\n- Không có thay đổi schema/dữ liệu Supabase, không merge và không triển khai production.\n\n## Chuẩn giao diện
 
 - Giao diện tiếng Việt, hiện đại, thân thiện, trực quan như SaaS.
 - Dashboard có số liệu/biểu đồ phù hợp quyền của người dùng.
