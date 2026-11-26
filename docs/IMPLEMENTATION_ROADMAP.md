@@ -45,13 +45,13 @@ Mỗi module hỗ trợ các action: `view`, `create`, `update`, `delete`, `appr
 | Cơ cấu tổ chức | Trang đọc/ghi theo permission, tìm kiếm/lọc, kiểm soát cha-con | Quyền org chưa cấp cho system_admin trong DB; cần kiểm thử tài khoản |
 | Nhân sự | Danh sách, hồ sơ, phân công, kết thúc phân công | Chưa có dữ liệu; cần kiểm thử RLS theo scope |
 | Báo cáo | Trang BGH riêng, không hiển thị số liệu giả | Chưa có report RPC/view và chưa có bảng nghiệp vụ người học/đào tạo |
-| Tuyển sinh | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
-| Người học | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
+| Tuyển sinh | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
+| Người học | Đã hoàn tất thiết kế chi tiết Chặng 4–5 | Chờ chốt biểu mẫu, migration/RLS và phê duyệt DB |
 | Đào tạo/giảng dạy/điểm | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
 | Hành chính/tài chính/tài sản | Chưa triển khai giao diện | Chờ data model và migration được duyệt |
 | AI-OFFICE | Chưa triển khai | Chờ nguồn dữ liệu và kiểm soát truy cập |
 
-Mô hình dữ liệu đề xuất cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Không áp dụng DDL lên production trong giai đoạn này.
+Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng được ghi tại docs/DATA_MODEL_PROPOSAL.md. Thiết kế chi tiết Chặng 4–5 (Tuyển sinh và Người học), gồm bảng dữ liệu, workflow nhập học, RLS/Storage, giao diện và kiểm thử chấp nhận, được ghi tại docs/PHASE_04_05_ADMISSIONS_STUDENTS.md. Đây là tài liệu thiết kế, chưa tạo migration và chưa áp dụng DDL lên production.
 
 ## Lộ trình triển khai
 
