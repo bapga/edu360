@@ -216,4 +216,93 @@ Các hàm trên đều đặt search_path rỗng. Đã xác minh anon không có
 
 ## 6. Điểm cần xử lý thêm
 
-Hàm private.apply_permission_change hiện dùng NOT EXISTS trước INSERT cho matrix_grant; vì PK là (role_id,module_id,action), nếu action đã tồn tại với scope khác thì có thể gặp duplicate key. Cần đổi sang upsert có chủ đích và kiểm tra payload trước khi áp dụng.
+Hàm `private.apply_permission_change` hiện dùng `NOT EXISTS` trước `INSERT` cho `matrix_grant`. Cách này không xử lý trường hợp action đã tồn tại với scope khác; do PK là `(role_id,module_id,action)`, thao tác có thể gặp duplicate key. Kiểm tra trực tiếp định nghĩa production ngày 2026-11-26 xác nhận đúng hành vi này.
+
+Bản thay thế dự thảo dưới đây dùng `ON CONFLICT` để cập nhật scope một cách nguyên tử. Chỉ áp dụng đồng thời với kiểm thử RPC quyết định, RLS, audit và quyền EXECUTE. Chưa chạy trên production.
+
+~~~sql
+create or replace function private.apply_permission_change(
+  p_type text,
+  p_payload jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path to ''
+as $function$
+declare
+  v_role uuid;
+  v_module uuid;
+  v_user uuid;
+  v_unit uuid;
+  v_rows integer;
+  v_action text;
+  v_scope text;
+begin
+  if p_type in ('matrix_grant', 'matrix_revoke') then
+    select id into v_role
+    from public.roles
+    where code = p_payload->>'role_code';
+
+    select id into v_module
+    from public.modules
+    where code = p_payload->>'module_code';
+
+    v_action := p_payload->>'action';
+    v_scope := p_payload->>'data_scope';
+
+    if v_role is null then raise exception 'unknown role code'; end if;
+    if v_module is null then raise exception 'unknown module code'; end if;
+    if v_action not in ('view','create','update','delete','approve','import','export') then
+      raise exception 'invalid action';
+    end if;
+    if v_scope not in ('all','unit','own') then raise exception 'invalid data scope'; end if;
+
+    if p_type = 'matrix_grant' then
+      insert into public.role_permissions (role_id, module_id, action, data_scope)
+      values (v_role, v_module, v_action, v_scope)
+      on conflict (role_id, module_id, action)
+      do update set data_scope = excluded.data_scope, updated_at = now();
+    else
+      delete from public.role_permissions
+      where role_id = v_role
+        and module_id = v_module
+        and action = v_action
+        and data_scope = v_scope;
+      get diagnostics v_rows = row_count;
+      if v_rows = 0 then raise exception 'permission not found'; end if;
+    end if;
+
+  elsif p_type in ('role_assign', 'role_unassign') then
+    select id into v_role
+    from public.roles
+    where code = p_payload->>'role_code';
+
+    if v_role is null then raise exception 'unknown role code'; end if;
+    v_user := (p_payload->>'user_id')::uuid;
+    v_unit := nullif(p_payload->>'org_unit_id','')::uuid;
+
+    if not exists (select 1 from public.profiles where id = v_user) then
+      raise exception 'unknown user';
+    end if;
+
+    if p_type = 'role_assign' then
+      insert into public.user_roles (user_id, role_id, org_unit_id)
+      values (v_user, v_role, v_unit)
+      on conflict (user_id, role_id, org_unit_id) do nothing;
+    else
+      delete from public.user_roles
+      where user_id = v_user
+        and role_id = v_role
+        and org_unit_id is not distinct from v_unit;
+      get diagnostics v_rows = row_count;
+      if v_rows = 0 then raise exception 'assignment not found'; end if;
+    end if;
+  else
+    raise exception 'unknown change type';
+  end if;
+end
+$function$;
+~~~
+
+**Lưu ý quan trọng:** trước khi dùng nhánh `role_assign` với `ON CONFLICT`, phải xác minh unique constraint/index của `user_roles` có đúng bộ cột `(user_id, role_id, org_unit_id)`. Nếu không có, thay bằng cơ chế khóa/kiểm tra phù hợp với constraint thật; không tự tạo constraint trong bản vá này.
