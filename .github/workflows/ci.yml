@@ -18,7 +18,12 @@ jobs:
         with:
           node-version: 20
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
       - name: Dependency audit summary
         run: |
           npm audit --json > npm-audit.json || true
@@ -27,3 +32,11 @@ jobs:
         run: npm run typecheck
       - name: Production build
         run: npm run build
+      - name: Upload generated lockfile
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feature/edu360-permission-hardening'
+        uses: actions/upload-artifact@v4
+        with:
+          name: edu360-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 1
