@@ -2,6 +2,7 @@ import { CalendarDays, CheckCircle2, Clock, Inbox } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { demo, showDemoData, type Tone } from '../lib/demo'
 import { allNavItems } from '../lib/nav'
+import { usePermissions } from '../contexts/PermissionContext'
 
 const toneBar: Record<Tone, string> = {
   blue: 'bg-brand-600',
@@ -27,8 +28,15 @@ function EmptyState({ title, hint }: { title: string; hint: string }) {
 }
 
 export default function Dashboard() {
+  const { can } = usePermissions()
   const today = new Intl.DateTimeFormat('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
-  const quick = ['/nhan-su', '/dao-tao', '/nguoi-hoc', '/van-ban'].map((p) => allNavItems.find((i) => i.path === p)!)
+  const quick = [
+    { path: '/nhan-su', module: 'hr' },
+    { path: '/dao-tao', module: 'training' },
+    { path: '/nguoi-hoc', module: 'students' },
+    { path: '/van-ban', module: 'admin_docs' },
+  ].filter((item) => can(item.module, 'view') || (item.module === 'students' && can('grades', 'view')))
+    .map(({ path }) => allNavItems.find((i) => i.path === path)!)
   const maxFaculty = Math.max(...demo.faculties.map((f) => f.value))
 
   return (

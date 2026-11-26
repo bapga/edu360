@@ -56,5 +56,9 @@ export const navGroups: NavGroup[] = [
 export const allNavItems: NavItem[] = navGroups.flatMap((g) => g.items)
 
 export function findNav(path: string): NavItem | undefined {
-  return allNavItems.find((i) => i.path === path)
+  const exact = allNavItems.find((item) => item.path === path)
+  if (exact) return exact
+  return [...allNavItems]
+    .filter((item) => path.startsWith(item.path + '/'))
+    .sort((a, b) => b.path.length - a.path.length)[0]
 }
