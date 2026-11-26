@@ -51,6 +51,6 @@ Các kiểm thử được thực hiện bằng cách mô phỏng JWT trong tran
 2. Tạo/gán tài khoản giáo viên, chuyên viên, trưởng/phó phòng/khoa theo danh sách được trường phê duyệt; không tự tạo password mặc định.
 3. Hoàn thiện các phân hệ còn placeholder: văn bản, tài chính, tài sản, tuyển sinh, người học, chương trình, giảng dạy, TKB, chuyên cần, điểm, công việc và báo cáo chuyên sâu.
 4. Chốt biểu mẫu và quy chế thực tế của trường trước khi tạo bảng/migration nghiệp vụ.
-5. Chạy CI/Preview mới nhất; nghiệm thu người dùng; sau đó mới merge và promote Vercel production.
+5. PR #2 đã merge; production Vercel đã deploy. Còn browser E2E và nghiệm thu người dùng thật trước khi coi nền tảng đủ điều kiện vận hành chính thức.
 
 Migration trên đã hoàn tất phần nền tảng phân quyền production. Không được xem toàn bộ EDU360 là đã hoàn tất vận hành cho đến khi các cổng trên được nghiệm thu.
