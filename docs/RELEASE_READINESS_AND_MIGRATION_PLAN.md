@@ -1,26 +1,26 @@
 # EDU360 — Kế hoạch phát hành, migration và nghiệm thu tổng thể
 
 Ngày rà soát: 2026-11-26  
-Trạng thái: Kế hoạch phát hành; **chưa phê duyệt triển khai production**.
+Trạng thái: Nền tảng RBAC đã được phê duyệt, áp dụng Supabase production và deploy Vercel ngày 2026-11-26; các phân hệ nghiệp vụ còn lại chưa đủ điều kiện vận hành.
 
 ## 1. Kết luận hiện trạng
 
-EDU360 có nhánh tính năng với các thành phần frontend nền tảng (đăng nhập/quyền/route guard, cơ cấu tổ chức, nhân sự, quản trị hệ thống, báo cáo) và bộ thiết kế nghiệp vụ cho các chặng 3–8. Đây chưa phải hệ thống nghiệp vụ hoàn chỉnh: phần lớn bảng nghiệp vụ chưa tồn tại trong Supabase production, RPC báo cáo chưa áp dụng và quyền/RLS production còn sai khác so với tiêu chí.
+EDU360 đã phát hành nền tảng frontend (đăng nhập/quyền/route guard, cơ cấu tổ chức, nhân sự, quản trị hệ thống, báo cáo) tại https://thndongnamna.vercel.app. Migration RBAC/reporting đã áp dụng production; BGH chỉ có reports.view, Admin có quyền quản trị 13 module (AI Office đóng). Đây chưa phải hệ thống nghiệp vụ hoàn chỉnh: phần lớn bảng nghiệp vụ và giao diện còn thiếu.
 
 Không được gọi là hoàn thành hoặc phát hành production cho đến khi tất cả cổng dưới đây đạt.
 
 ## 2. Các điều kiện chặn phát hành
 
 ### P0 — Bảo mật quyền và dữ liệu
-- [ ] Thu hồi role_permissions của ban_giam_hieu trên hr và students; chỉ giữ reports.view.
-- [ ] Siết SELECT policies cho roles, modules, role_permissions và org_units theo quyền tối thiểu cần thiết.
+- [x] Thu hồi role_permissions của ban_giam_hieu trên hr và students; chỉ giữ reports.view.
+- [x] Siết SELECT policies cho roles, modules, role_permissions và org_units theo quyền tối thiểu cần thiết.
 - [ ] Kiểm tra tất cả embedded relationship queries sau khi siết RLS.
-- [ ] Sửa decide_permission_change để separation-of-duty được enforce ở database, bao gồm người duyệt không thể duyệt thay đổi ma trận cho role mà chính họ đang giữ.
-- [ ] Sửa apply_permission_change để xử lý idempotent/upsert hoặc từ chối scope change rõ ràng; không duplicate key.
-- [ ] Chốt ma trận quyền system_admin theo module/action; không tự cấp toàn quyền ngầm trong frontend.
+- [x] Sửa decide_permission_change để separation-of-duty được enforce ở database, bao gồm người duyệt không thể duyệt thay đổi ma trận cho role mà chính họ đang giữ.
+- [x] Sửa apply_permission_change để xử lý idempotent/upsert và advisory lock chống trùng role assignment.
+- [x] Chốt ma trận quyền system_admin: 91 actions trên 13 module; AI Office không cấp mặc định.
 - [ ] Xử lý staff_insert theo scope unit bằng RPC an toàn hoặc giữ rõ yêu cầu hr.create global.
 - [ ] Rà soát SECURITY DEFINER, EXECUTE grants, search_path, leaked-password protection, FK indexes và duplicate FK constraints.
-- [ ] Kiểm thử REST/RPC/Storage trực tiếp bằng JWT Admin, BGH và các vai trò nghiệp vụ.
+- [ ] Kiểm thử browser/REST/RPC với JWT thật cho Admin, BGH và các vai trò nghiệp vụ (đã có SQL JWT-claims smoke tests trong transaction rollback).
 - [ ] BGH chỉ xem reports aggregate; chứng minh không thể SELECT dữ liệu cá nhân/bảng nguồn.
 
 ### P1 — Nền tảng nghiệp vụ
@@ -103,23 +103,16 @@ No production SQL is to be applied by inference from this plan.
 
 ## 7. Known facts and limitations at this checkpoint
 
-- Production project ref: akckcnijujtevfbginja.
-- The production schema inventory previously found only platform/admin tables; no business tables for admissions, students, curriculum, timetable, grades, admin documents, finance, assets or tasks.
-- Current BGH role had hr.view, reports.view and students.view; the intended policy is reports.view only.
-- Current system_admin role had system module permissions only; business module permissions were not yet granted.
-- Metadata SELECT policies were broader than intended for active users.
-- Production permission RPC separation-of-duty and duplicate-key issues remain open.
-- The latest feature branch contains design documents for phases 3–8; no production migrations were applied by this work.
-- Browser testing with real role accounts and direct API RLS testing remain outstanding.
-- GitHub Actions and Vercel Preview for the latest commit must be rechecked before any release decision.
-
+- Production project: `akckcnijujtevfbginja`; RBAC migration `20261126153433_production_rbac_reporting_hardening` applied.
+- `system_admin`: 91 permissions across 13 modules, excluding `ai_office`; `ban_giam_hieu`: only `reports.view`.
+- SQL smoke tests using simulated JWT claims and rollback verified BGH metadata denial, aggregate report access, Admin metadata access and separation-of-duty.
+- Two active production profiles exist and both are system_admin; no actual BGH, teacher, specialist or department/faculty manager accounts are assigned.
+- Staff and staff_assignments are empty. Reports currently show 9 active org units, 0 staff, 0 assignments; student/admissions/training result metrics are unavailable.
+- PR #2 was squash-merged as `fcd0e66e33ea420a43e215ad4e58140eadb5e821`; GitHub Actions CI #180 passed; Vercel production is READY at https://thndongnamna.vercel.app. HTML, CSS, main JS and lazy page chunks returned HTTP 200.
+- No real browser login/E2E acceptance has been run.
+- Business modules admissions, students, curriculum, timetable, attendance, grades, documents, finance, assets and tasks still lack production tables and CRUD workflows; current routes are placeholders.
+- Security follow-ups: leaked-password protection is OFF; private archive table `private.c8_removed_role_permissions` contains 36 rows with RLS OFF and no anon/authenticated SELECT grant; Vercel install-script and npm cache-dir warnings remain.
+- Full production acceptance depends on actual school forms, program decisions, timetable and grading regulations, real role accounts and browser/JWT acceptance tests.
 ## 8. Explicit approval boundary
 
-This repository work may prepare code, tests, migration drafts and Preview builds on the feature branch. The following remain separate explicit approvals:
-- Applying SQL/schema/data changes to Supabase production.
-- Creating or changing production users/role assignments.
-- Merging the PR into main.
-- Deploying to production or changing Vercel project/domain/security settings.
-- Enabling AI provider calls or sending internal data to a third party.
-
-A request to continue project work does not by itself waive these safety gates. The project is complete only after the acceptance criteria above are verified, not merely after design documents or CI pass.
+Đã được người dùng phê duyệt và hoàn tất cho đợt nền tảng ngày 2026-11-26: áp dụng migration RBAC/reporting, merge PR #2 vào main và deploy Vercel production. Các thay đổi tiếp theo liên quan đến schema nghiệp vụ, tài khoản/role thật, cấu hình bảo mật Auth và AI provider vẫn phải được kiểm thử và phê duyệt theo từng phạm vi. Việc production foundation READY không đồng nghĩa toàn bộ dự án hoàn thành; chỉ nghiệm thu sau khi tất cả phân hệ nghiệp vụ và tiêu chí ở trên đạt.
