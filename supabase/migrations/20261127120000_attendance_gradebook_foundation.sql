@@ -121,9 +121,7 @@ create policy attendance_records_insert on public.attendance_records
  for insert to authenticated with check (
   exists(select 1 from public.attendance_sessions s join public.class_subject_offerings o on o.id=s.offering_id
    where s.id=session_id and s.status in ('draft','returned')
-    and (private.has_permission('teaching','create',o.org_unit_id) or (s.created_by=auth.uid() and private.has_permission('teaching','update',o.org_unit_id)))
-    and exists(select 1 from public.student_enrollments e join public.class_groups cg on cg.id=e.class_group_id
-      where e.id=enrollment_id and e.status='studying' and cg.id=o.class_group_id))
+    and (private.has_permission('teaching','create',o.org_unit_id) or (s.created_by=auth.uid() and private.has_permission('teaching','update',o.org_unit_id))))
  );
 create policy attendance_records_update on public.attendance_records
  for update to authenticated using (
@@ -133,9 +131,7 @@ create policy attendance_records_update on public.attendance_records
  ) with check (
   exists(select 1 from public.attendance_sessions s join public.class_subject_offerings o on o.id=s.offering_id
    where s.id=session_id and s.status in ('draft','returned')
-    and (private.has_permission('teaching','update',o.org_unit_id) or (s.created_by=auth.uid() and private.has_permission('teaching','create',o.org_unit_id)))
-    and exists(select 1 from public.student_enrollments e join public.class_groups cg on cg.id=e.class_group_id
-      where e.id=enrollment_id and e.status='studying' and cg.id=o.class_group_id))
+    and (private.has_permission('teaching','update',o.org_unit_id) or (s.created_by=auth.uid() and private.has_permission('teaching','create',o.org_unit_id))))
  );
 
 create policy gradebooks_select on public.gradebooks
@@ -187,8 +183,7 @@ create policy grade_entries_insert on public.grade_entries
    join public.class_subject_offerings o on o.id=g.offering_id
    join public.student_enrollments e on e.id=enrollment_id
    where c.id=component_id and g.status in ('draft','returned')
-    and private.has_permission('grades','create',o.org_unit_id)
-    and e.status='studying' and e.class_group_id=o.class_group_id)
+    and private.has_permission('grades','create',o.org_unit_id))
  );
 create policy grade_entries_update on public.grade_entries
  for update to authenticated using (
@@ -200,9 +195,27 @@ create policy grade_entries_update on public.grade_entries
    join public.class_subject_offerings o on o.id=g.offering_id
    join public.student_enrollments e on e.id=enrollment_id
    where c.id=component_id and g.status in ('draft','returned')
-    and private.has_permission('grades','update',o.org_unit_id)
-    and e.status='studying' and e.class_group_id=o.class_group_id)
+    and private.has_permission('grades','update',o.org_unit_id))
  );
+
+
+create or replace function private.validate_attendance_session()
+returns trigger language plpgsql security definer set search_path=''
+as $
+declare v_offering public.class_subject_offerings; v_term public.academic_terms;
+begin
+ select * into v_offering from public.class_subject_offerings where id=new.offering_id;
+ if not found or v_offering.status not in ('planned','open') then raise exception 'offering is not available for attendance'; end if;
+ select t.* into v_term from public.academic_terms t where t.id=v_offering.academic_term_id;
+ if new.session_date < v_term.starts_on or new.session_date > v_term.ends_on then
+  raise exception 'attendance date must be inside the academic term';
+ end if;
+ if tg_op='INSERT' and new.status<>'draft' then raise exception 'new attendance sessions must start as draft'; end if;
+ return new;
+end;
+$;
+create trigger attendance_session_validate before insert or update on public.attendance_sessions
+ for each row execute function private.validate_attendance_session();
 
 create or replace function private.validate_attendance_record()
 returns trigger language plpgsql security definer set search_path=''
