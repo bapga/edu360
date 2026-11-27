@@ -123,3 +123,25 @@ Các trạng thái bên trên là mốc thiết kế ngày 2026-11-26. Tình tr�
 - **Chặn nghiệm thu toàn trường:** chưa có dữ liệu nhân sự, lớp, chương trình, học phần, phòng/xưởng và hồ sơ tuyển sinh thực tế; chưa có tài khoản giáo viên/BGH/chuyên viên thật để E2E; chưa đối chiếu biểu mẫu và quyết định đào tạo thực tế; chưa chạy browser E2E toàn luồng.
 
 Không coi việc tạo bảng/RLS là hoàn tất giao diện hoặc nghiệm thu nghiệp vụ. Mọi chặng tiếp theo phải có UI, workflow, kiểm thử phân quyền API/RLS, kiểm thử dữ liệu thật được cung cấp và production verification.
+
+
+## Cập nhật triển khai mới nhất — 2026-11-27 12:03
+
+Các lát cắt đã được merge vào `main`, áp dụng Supabase và phát hành Vercel production:
+
+- **Giảng dạy & thời khóa biểu:** PR #7; giao diện `/giang-day` cho năm học/học kỳ, mở lớp học phần, phòng/xưởng, phân công giáo viên, lập và công bố lịch.
+- **Chuyên cần & điểm:** PR #10; giao diện con `/nguoi-hoc/diem`, điểm danh theo buổi, nhập điểm, gửi duyệt, phê duyệt, khóa/mở khóa có lý do.
+- **Tài chính:** PR #11; `/tai-chinh`, danh mục khoản thu, hóa đơn người học, phiếu thu, đề nghị chi và phê duyệt.
+- **Tài sản:** PR #12; `/tai-san`, sổ tài sản, bàn giao/thu hồi, bảo trì và lịch sử biến động.
+- **Báo cáo BGH:** chỉ số tài chính và tài sản ở dạng tổng hợp được đưa vào `reports_summary()`; BGH không có quyền đọc bảng nguồn.
+
+## Phạm vi còn lại
+
+- Hành chính/văn bản, luồng trình ký và lưu trữ hồ sơ.
+- Điều hành/công việc, phân công, tiến độ, lịch công tác và duyệt hoàn thành.
+- Hoàn thiện báo cáo nghiệp vụ theo mẫu trường; AI Office.
+- Đồng bộ file nguồn của migration nền chuyên cần/điểm đã có trong Supabase migration history nhưng chưa có file nguồn tương ứng trên `main`.
+- Rà soát Security Advisor, bật leaked-password protection, rà soát index và browser E2E bằng tài khoản thật.
+- Đối chiếu dữ liệu gốc/biểu mẫu/quy chế/ quyết định của trường; không tạo dữ liệu giả.
+
+Các phân hệ tài chính và tài sản hiện là nền tảng quản lý nghiệp vụ; chưa được coi là phần mềm kế toán tổng hợp hoặc hệ thống quản lý tài sản hoàn chỉnh theo biểu mẫu pháp quy. Chưa nghiệm thu toàn trường khi chưa có dữ liệu thật và tài khoản đại diện từng vai trò.
