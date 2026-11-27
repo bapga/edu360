@@ -87,7 +87,7 @@ alter table public.teaching_assignments enable row level security;
 alter table public.timetable_slots enable row level security;
 
 create policy class_subject_offerings_select on public.class_subject_offerings
- for select to authenticated using (private.has_permission('training','view',org_unit_id));
+ for select to authenticated using (private.has_permission('training','view',org_unit_id) or private.has_permission('teaching','view',org_unit_id));
 create policy class_subject_offerings_insert on public.class_subject_offerings
  for insert to authenticated with check (
   private.has_permission('training','create',org_unit_id)
@@ -190,6 +190,10 @@ begin
  if v_assignment.assigned_from > new.effective_from or (v_assignment.assigned_to is not null and v_assignment.assigned_to < new.effective_to) then
   raise exception 'teaching assignment does not cover the timetable dates';
  end if;
+ if new.effective_from < (select t.starts_on from public.academic_terms t where t.id=v_offering.academic_term_id)
+  or new.effective_to > (select t.ends_on from public.academic_terms t where t.id=v_offering.academic_term_id) then
+  raise exception 'timetable dates must be inside the academic term';
+ end if;
  if new.classroom_id is not null then
   select * into v_room from public.classrooms where id=new.classroom_id and is_active;
   if not found or v_room.org_unit_id <> v_offering.org_unit_id then
@@ -244,7 +248,8 @@ begin
   join public.teaching_assignments ab on ab.id=b.teaching_assignment_id
   join public.class_groups cgb on cgb.id=ob.class_group_id
   where oa.academic_term_id=p_academic_term_id and oa.org_unit_id=p_org_unit_id
-   and ob.academic_term_id=p_academic_term_id and ob.org_unit_id=p_org_unit_id
+   and ob.org_unit_id=p_org_unit_id
+   and (ob.academic_term_id=p_academic_term_id or b.status='published')
    and a.status in ('draft','published') and b.status in ('draft','published')
    and a.day_of_week=b.day_of_week
    and a.effective_from <= b.effective_to and b.effective_from <= a.effective_to
