@@ -30,6 +30,7 @@ Migration hardening bổ sung:
 
 - Migration hardening chạy thử transaction rollback trước khi áp dụng.
 - Migration production: `20261127114321_attendance_workflow_hardening`.
+- Migration production: `20261127115000_grade_offering_read_access`, bổ sung quyền `grades.view` xem lớp học phần mà không cấp quyền đọc dữ liệu đào tạo ngoài phạm vi.
 - RLS bật trên 5 bảng; BGH mô phỏng chỉ có `reports.view`, truy vấn 5 bảng trả 0 dòng.
 - Các RPC SECURITY DEFINER đều dùng `search_path=''` và chỉ cấp EXECUTE cho authenticated.
 - Vercel Preview build (TypeScript + Vite) đạt READY; npm audit: 0 vulnerabilities.
