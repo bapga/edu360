@@ -201,7 +201,7 @@ create policy grade_entries_update on public.grade_entries
 
 create or replace function private.validate_attendance_session()
 returns trigger language plpgsql security definer set search_path=''
-as $
+as $$
 declare v_offering public.class_subject_offerings; v_term public.academic_terms;
 begin
  select * into v_offering from public.class_subject_offerings where id=new.offering_id;
@@ -213,7 +213,7 @@ begin
  if tg_op='INSERT' and new.status<>'draft' then raise exception 'new attendance sessions must start as draft'; end if;
  return new;
 end;
-$;
+$$;
 create trigger attendance_session_validate before insert or update on public.attendance_sessions
  for each row execute function private.validate_attendance_session();
 
