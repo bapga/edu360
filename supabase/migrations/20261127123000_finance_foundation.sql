@@ -157,7 +157,7 @@ begin
  set total_amount=coalesce((select sum(l.line_total) from public.invoice_lines l where l.invoice_id=v_invoice),0),
   updated_at=now()
  where i.id=v_invoice and i.status='draft';
- return coalesce(new,old);
+ return null;
 end;
 $function$;
 create trigger invoice_lines_recalculate
