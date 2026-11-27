@@ -6,14 +6,14 @@ import { usePermissions } from '../contexts/PermissionContext'
 type Student={id:string;student_code:string;full_name:string;date_of_birth:string|null;phone:string|null;status:string;org_unit_id:string}
 type Cohort={id:string;cohort_code:string;name:string;start_year:number;end_year:number;org_unit_id:string;status:string}
 type ClassGroup={id:string;class_code:string;name:string;cohort_id:string;org_unit_id:string;status:string}
-type Unit={id:string;code:string;name:string}
+type Unit={id:string;code:string;name:string}\ntype EnrollmentRef={student_id:string;cohort_id:string}
 const statusLabel:Record<string,string>={active:'Đang học',reserved:'Bảo lưu',withdrawn:'Thôi học',graduated:'Đã tốt nghiệp',transferred:'Chuyển trường'}
 
 export default function StudentsPage(){
  const {can}=usePermissions()
  const [students,setStudents]=useState<Student[]>([])
  const [cohorts,setCohorts]=useState<Cohort[]>([])
- const [classes,setClasses]=useState<ClassGroup[]>([])
+ const [classes,setClasses]=useState<ClassGroup[]>([])\n const [enrollments,setEnrollments]=useState<EnrollmentRef[]>([])
  const [units,setUnits]=useState<Unit[]>([])
  const [search,setSearch]=useState('')
  const [cohortFilter,setCohortFilter]=useState('')
@@ -27,19 +27,19 @@ export default function StudentsPage(){
  const load=useCallback(async()=>{
   if(!supabase){setError('Chưa cấu hình kết nối Supabase.');setLoading(false);return}
   setLoading(true);setError(null)
-  const [s,c,g,u]=await Promise.all([
+  const [s,c,g,e,u]=await Promise.all([
    supabase.from('students').select('id,student_code,full_name,date_of_birth,phone,status,org_unit_id').order('created_at',{ascending:false}).limit(500),
    supabase.from('cohorts').select('id,cohort_code,name,start_year,end_year,org_unit_id,status').order('start_year',{ascending:false}),
    supabase.from('class_groups').select('id,class_code,name,cohort_id,org_unit_id,status').order('class_code'),
    supabase.from('org_units').select('id,code,name').eq('is_active',true).is('deleted_at',null).order('sort_order')
   ])
-  const failure=s.error??c.error??g.error
+  const failure=s.error??c.error??g.error??e.error
   if(failure)setError(failure.message)
-  setStudents((s.data??[]) as Student[]);setCohorts((c.data??[]) as Cohort[]);setClasses((g.data??[]) as ClassGroup[]);setUnits((u.data??[]) as Unit[])
+  setStudents((s.data??[]) as Student[]);setCohorts((c.data??[]) as Cohort[]);setClasses((g.data??[]) as ClassGroup[]);setEnrollments((e.data??[]) as EnrollmentRef[]);setUnits((u.data??[]) as Unit[])
   setLoading(false)
  },[])
  useEffect(()=>{void load()},[load])
- const filtered=useMemo(()=>students.filter(s=>(!search||[s.student_code,s.full_name,s.phone??''].some(v=>v.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi'))))&&(!cohortFilter||classes.some(c=>c.cohort_id===cohortFilter&&c.org_unit_id===s.org_unit_id))),[students,search,cohortFilter,classes])
+ const filtered=useMemo(()=>students.filter(s=>(!search||[s.student_code,s.full_name,s.phone??''].some(v=>v.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi'))))&&(!cohortFilter||enrollments.some(e=>e.student_id===s.id&&e.cohort_id===cohortFilter))),[students,search,cohortFilter,enrollments])
  const canCreate=can('students','create'),canUpdate=can('students','update')
  async function saveStudent(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
   const {error:e1}=await supabase.from('students').insert({org_unit_id:studentForm.org_unit_id,student_code:studentForm.student_code.trim().toUpperCase(),full_name:studentForm.full_name.trim(),date_of_birth:studentForm.date_of_birth||null,phone:studentForm.phone.trim()||null})
