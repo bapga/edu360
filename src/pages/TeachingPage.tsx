@@ -1,0 +1,143 @@
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { CalendarDays, BookOpen, Users, DoorOpen, Plus, RefreshCw, Send, Clock3 } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { usePermissions } from '../contexts/PermissionContext'
+
+type Unit = { id:string; code:string; name:string }
+type Year = { id:string; org_unit_id:string; code:string; starts_on:string; ends_on:string; status:string }
+type Term = { id:string; academic_year_id:string; term_code:string; name:string; starts_on:string; ends_on:string; status:string }
+type ClassGroup = { id:string; org_unit_id:string; class_code:string; name:string; status:string }
+type ProgramSubject = { id:string; total_hours:number; term_no:number; subject_id:string; program_version_id:string }
+type Subject = { id:string; code:string; name:string }
+type Staff = { id:string; staff_code:string; full_name:string; status:string }
+type StaffAssignment = { staff_id:string; org_unit_id:string; start_date:string; end_date:string|null; status:string }
+type Offering = { id:string; org_unit_id:string; class_group_id:string; program_subject_id:string; academic_term_id:string; planned_hours:number; status:string }
+type Room = { id:string; org_unit_id:string; code:string; name:string; room_type:string; capacity:number|null; is_active:boolean }
+type Assignment = { id:string; offering_id:string; staff_id:string; assignment_role:string; assigned_from:string; assigned_to:string|null; status:string }
+type Slot = { id:string; offering_id:string; teaching_assignment_id:string; classroom_id:string|null; day_of_week:number; period_start:number; period_end:number; effective_from:string; effective_to:string; status:string }
+const days = ['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7','Chủ nhật']
+const roomTypes:Record<string,string>={classroom:'Phòng học',workshop:'Xưởng thực hành',laboratory:'Phòng thí nghiệm',practice_area:'Khu thực hành',other:'Khác'}
+const statusLabels:Record<string,string>={planned:'Dự kiến',open:'Đang mở',completed:'Hoàn thành',cancelled:'Đã hủy',active:'Đang hiệu lực',ended:'Đã kết thúc',draft:'Bản nháp',published:'Đã công bố'}
+
+export default function TeachingPage() {
+ const {can}=usePermissions()
+ const [tab,setTab]=useState<'offerings'|'rooms'|'assignments'|'timetable'>('offerings')
+ const [units,setUnits]=useState<Unit[]>([])
+ const [years,setYears]=useState<Year[]>([])
+ const [terms,setTerms]=useState<Term[]>([])
+ const [classes,setClasses]=useState<ClassGroup[]>([])
+ const [programSubjects,setProgramSubjects]=useState<ProgramSubject[]>([])
+ const [subjects,setSubjects]=useState<Subject[]>([])
+ const [staff,setStaff]=useState<Staff[]>([])
+ const [staffAssignments,setStaffAssignments]=useState<StaffAssignment[]>([])
+ const [offerings,setOfferings]=useState<Offering[]>([])
+ const [rooms,setRooms]=useState<Room[]>([])
+ const [assignments,setAssignments]=useState<Assignment[]>([])
+ const [slots,setSlots]=useState<Slot[]>([])
+ const [loading,setLoading]=useState(true)
+ const [saving,setSaving]=useState(false)
+ const [error,setError]=useState<string|null>(null)
+ const [notice,setNotice]=useState<string|null>(null)
+ const [yearForm,setYearForm]=useState({org_unit_id:'',code:'',starts_on:'',ends_on:''})
+ const [termForm,setTermForm]=useState({academic_year_id:'',term_code:'HK1',name:'Học kỳ I',starts_on:'',ends_on:''})
+ const [offeringForm,setOfferingForm]=useState({org_unit_id:'',class_group_id:'',program_subject_id:'',academic_term_id:'',planned_hours:''})
+ const [roomForm,setRoomForm]=useState({org_unit_id:'',code:'',name:'',room_type:'classroom',capacity:''})
+ const [assignmentForm,setAssignmentForm]=useState({offering_id:'',staff_id:'',assignment_role:'primary',assigned_from:'',assigned_to:''})
+ const [slotForm,setSlotForm]=useState({offering_id:'',teaching_assignment_id:'',classroom_id:'',day_of_week:'1',period_start:'1',period_end:'4',effective_from:'',effective_to:''})
+ const canTrainingCreate=can('training','create'), canTeachingCreate=can('teaching','create'), canTeachingApprove=can('teaching','approve')
+
+ const load=useCallback(async()=>{
+  if(!supabase){setError('Chưa cấu hình kết nối Supabase.');setLoading(false);return}
+  setLoading(true);setError(null);setNotice(null)
+  const tasks=[
+   supabase.from('org_units').select('id,code,name').eq('is_active',true).is('deleted_at',null).order('sort_order'),
+   supabase.from('academic_years').select('id,org_unit_id,code,starts_on,ends_on,status').order('starts_on',{ascending:false}),
+   supabase.from('academic_terms').select('id,academic_year_id,term_code,name,starts_on,ends_on,status').order('starts_on',{ascending:false}),
+   supabase.from('class_groups').select('id,org_unit_id,class_code,name,status').eq('status','active').order('class_code'),
+   supabase.from('program_subjects').select('id,total_hours,term_no,subject_id,program_version_id').order('sequence_no'),
+   supabase.from('subjects').select('id,code,name').order('name'),
+   supabase.from('staff').select('id,staff_code,full_name,status').is('deleted_at',null).eq('status','active').order('full_name'),
+   supabase.from('staff_assignments').select('staff_id,org_unit_id,start_date,end_date,status').eq('status','active'),
+   supabase.from('class_subject_offerings').select('id,org_unit_id,class_group_id,program_subject_id,academic_term_id,planned_hours,status').order('created_at',{ascending:false}),
+   supabase.from('classrooms').select('id,org_unit_id,code,name,room_type,capacity,is_active').order('code'),
+   supabase.from('teaching_assignments').select('id,offering_id,staff_id,assignment_role,assigned_from,assigned_to,status').order('created_at',{ascending:false}),
+   supabase.from('timetable_slots').select('id,offering_id,teaching_assignment_id,classroom_id,day_of_week,period_start,period_end,effective_from,effective_to,status').order('day_of_week')
+  ] as const
+  const results=await Promise.all(tasks)
+  const failure=results.find(x=>x.error)?.error
+  if(failure)setError(failure.message)
+  const [u,y,t,c,ps,s,st,sa,o,r,a,sl]=results
+  setUnits((u.data??[]) as Unit[]);setYears((y.data??[]) as Year[]);setTerms((t.data??[]) as Term[]);setClasses((c.data??[]) as ClassGroup[])
+  setProgramSubjects((ps.data??[]) as ProgramSubject[]);setSubjects((s.data??[]) as Subject[]);setStaff((st.data??[]) as Staff[]);setStaffAssignments((sa.data??[]) as StaffAssignment[])
+  setOfferings((o.data??[]) as Offering[]);setRooms((r.data??[]) as Room[]);setAssignments((a.data??[]) as Assignment[]);setSlots((sl.data??[]) as Slot[])
+  setLoading(false)
+ },[])
+ useEffect(()=>{void load()},[load])
+
+ const subjectName=(id:string)=>{const s=subjects.find(x=>x.id===id);return s? s.code+' · '+s.name:'Học phần'}
+ const className=(id:string)=>{const c=classes.find(x=>x.id===id);return c?c.class_code+' · '+c.name:'Lớp'}
+ const staffName=(id:string)=>{const s=staff.find(x=>x.id===id);return s?s.staff_code+' · '+s.full_name:'Nhân sự'}
+ const termName=(id:string)=>{const t=terms.find(x=>x.id===id);return t?t.name+' ('+t.term_code+')':'Học kỳ'}
+ const unitName=(id:string)=>units.find(x=>x.id===id)?.name??'Đơn vị'
+ const offeringLabel=(o:Offering)=>className(o.class_group_id)+' / '+subjectName(programSubjects.find(p=>p.id===o.program_subject_id)?.subject_id??'')+' / '+termName(o.academic_term_id)
+ const eligibleStaff=useMemo(()=>staff.filter(s=>staffAssignments.some(a=>a.staff_id===s.id&&a.status==='active')), [staff,staffAssignments])
+
+ async function submitYear(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
+  const {error:e1}=await supabase.from('academic_years').insert({...yearForm,code:yearForm.code.trim(),status:'planned'})
+  setSaving(false);if(e1){setError(e1.message);return};setYearForm({org_unit_id:'',code:'',starts_on:'',ends_on:''});setNotice('Đã tạo năm học.');await load()
+ }
+ async function submitTerm(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
+  const {error:e1}=await supabase.from('academic_terms').insert({...termForm,term_code:termForm.term_code.trim().toUpperCase(),name:termForm.name.trim(),status:'planned'})
+  setSaving(false);if(e1){setError(e1.message);return};setTermForm({academic_year_id:'',term_code:'HK1',name:'Học kỳ I',starts_on:'',ends_on:''});setNotice('Đã tạo học kỳ.');await load()
+ }
+ async function submitOffering(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
+  const {error:e1}=await supabase.from('class_subject_offerings').insert({...offeringForm,planned_hours:Number(offeringForm.planned_hours)})
+  setSaving(false);if(e1){setError(e1.message);return};setOfferingForm({org_unit_id:'',class_group_id:'',program_subject_id:'',academic_term_id:'',planned_hours:''});setNotice('Đã mở lớp học phần.');await load()
+ }
+ async function submitRoom(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
+  const {error:e1}=await supabase.from('classrooms').insert({...roomForm,code:roomForm.code.trim().toUpperCase(),name:roomForm.name.trim(),capacity:roomForm.capacity?Number(roomForm.capacity):null})
+  setSaving(false);if(e1){setError(e1.message);return};setRoomForm({org_unit_id:'',code:'',name:'',room_type:'classroom',capacity:''});setNotice('Đã thêm phòng/xưởng.');await load()
+ }
+ async function submitAssignment(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
+  const offering=offerings.find(o=>o.id===assignmentForm.offering_id)
+  if(!offering){setSaving(false);setError('Vui lòng chọn lớp học phần.');return}
+  const {error:e1}=await supabase.from('teaching_assignments').insert({offering_id:assignmentForm.offering_id,staff_id:assignmentForm.staff_id,org_unit_id:offering.org_unit_id,assignment_role:assignmentForm.assignment_role,assigned_from:assignmentForm.assigned_from,assigned_to:assignmentForm.assigned_to||null,status:'active'})
+  setSaving(false);if(e1){setError(e1.message);return};setAssignmentForm({offering_id:'',staff_id:'',assignment_role:'primary',assigned_from:'',assigned_to:''});setNotice('Đã phân công giảng dạy.');await load()
+ }
+ async function submitSlot(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
+  const {error:e1}=await supabase.from('timetable_slots').insert({offering_id:slotForm.offering_id,teaching_assignment_id:slotForm.teaching_assignment_id,classroom_id:slotForm.classroom_id||null,day_of_week:Number(slotForm.day_of_week),period_start:Number(slotForm.period_start),period_end:Number(slotForm.period_end),effective_from:slotForm.effective_from,effective_to:slotForm.effective_to,status:'draft'})
+  setSaving(false);if(e1){setError(e1.message);return};setSlotForm({offering_id:'',teaching_assignment_id:'',classroom_id:'',day_of_week:'1',period_start:'1',period_end:'4',effective_from:'',effective_to:''});setNotice('Đã thêm tiết học ở trạng thái bản nháp.');await load()
+ }
+ async function publish(termId:string,unitId:string){if(!supabase)return;const reason=window.prompt('Lý do/căn cứ công bố thời khóa biểu (tối thiểu 10 ký tự):')??'';if(reason.trim().length<10)return
+  setSaving(true);setError(null);const {data,error:e1}=await supabase.rpc('publish_timetable',{p_academic_term_id:termId,p_org_unit_id:unitId,p_reason:reason.trim()})
+  setSaving(false);if(e1){setError(e1.message);return};setNotice('Đã công bố '+String(data)+' tiết học.');await load()
+ }
+
+ const tabs=[{id:'offerings' as const,label:'Lớp học phần',icon:BookOpen},{id:'rooms' as const,label:'Phòng / xưởng',icon:DoorOpen},{id:'assignments' as const,label:'Phân công GV',icon:Users},{id:'timetable' as const,label:'Thời khóa biểu',icon:CalendarDays}]
+ return <div className="space-y-6">
+  <header className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex items-center gap-2 text-sm font-medium text-brand-700"><CalendarDays size={17}/> Phòng Đào tạo</div><h1 className="mt-1 text-2xl font-semibold text-navy-900">Giảng dạy & thời khóa biểu</h1><p className="mt-1 text-sm text-slate-500">Mở lớp học phần, phân công giáo viên, bố trí phòng và công bố lịch học.</p></div><button type="button" onClick={()=>void load()} disabled={loading} className="btn-ghost inline-flex items-center gap-2"><RefreshCw size={16}/> Làm mới</button></header>
+  <section className="grid gap-3 sm:grid-cols-4"><div className="card p-4"><div className="text-sm text-slate-500">Lớp học phần</div><div className="mt-1 text-2xl font-semibold">{offerings.length}</div></div><div className="card p-4"><div className="text-sm text-slate-500">Phòng / xưởng</div><div className="mt-1 text-2xl font-semibold">{rooms.length}</div></div><div className="card p-4"><div className="text-sm text-slate-500">Phân công</div><div className="mt-1 text-2xl font-semibold">{assignments.length}</div></div><div className="card p-4"><div className="text-sm text-slate-500">Tiết học</div><div className="mt-1 text-2xl font-semibold">{slots.length}</div></div></section>
+  {error&&<div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}{notice&&<div role="status" className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</div>}
+  <section className="card space-y-4 p-4"><div className="flex items-center gap-2"><CalendarDays size={18}/><h2 className="font-semibold">Thiết lập năm học và học kỳ</h2></div>
+   <div className="grid gap-4 lg:grid-cols-2">
+    {canTrainingCreate&&<form onSubmit={submitYear} className="space-y-3 rounded-xl border border-slate-200 p-3"><h3 className="text-sm font-semibold">Thêm năm học</h3><div className="grid gap-2 sm:grid-cols-2"><select required value={yearForm.org_unit_id} onChange={e=>setYearForm(v=>({...v,org_unit_id:e.target.value}))} className="field"><option value="">Đơn vị quản lý</option>{units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select><input required value={yearForm.code} onChange={e=>setYearForm(v=>({...v,code:e.target.value}))} placeholder="Mã năm học, VD 2026-2027" className="field"/><input required type="date" value={yearForm.starts_on} onChange={e=>setYearForm(v=>({...v,starts_on:e.target.value}))} className="field"/><input required type="date" value={yearForm.ends_on} onChange={e=>setYearForm(v=>({...v,ends_on:e.target.value}))} className="field"/></div><button disabled={saving} className="btn-primary"><Plus size={14} className="mr-1 inline"/> Tạo năm học</button></form>}
+    {canTrainingCreate&&<form onSubmit={submitTerm} className="space-y-3 rounded-xl border border-slate-200 p-3"><h3 className="text-sm font-semibold">Thêm học kỳ</h3><select required value={termForm.academic_year_id} onChange={e=>setTermForm(v=>({...v,academic_year_id:e.target.value}))} className="field"><option value="">Chọn năm học</option>{years.map(y=><option key={y.id} value={y.id}>{y.code} · {unitName(y.org_unit_id)}</option>)}</select><div className="grid gap-2 sm:grid-cols-2"><input required value={termForm.term_code} onChange={e=>setTermForm(v=>({...v,term_code:e.target.value}))} placeholder="Mã học kỳ (HK1)" className="field"/><input required value={termForm.name} onChange={e=>setTermForm(v=>({...v,name:e.target.value}))} placeholder="Tên học kỳ" className="field"/><input required type="date" value={termForm.starts_on} onChange={e=>setTermForm(v=>({...v,starts_on:e.target.value}))} className="field"/><input required type="date" value={termForm.ends_on} onChange={e=>setTermForm(v=>({...v,ends_on:e.target.value}))} className="field"/></div><button disabled={saving||!years.length} className="btn-primary"><Plus size={14} className="mr-1 inline"/> Tạo học kỳ</button></form>}
+   </div>
+   <div className="grid gap-2 sm:grid-cols-2">{years.map(y=><div key={y.id} className="rounded-lg bg-slate-50 p-3 text-sm"><b>{y.code}</b> · {unitName(y.org_unit_id)}<div className="text-xs text-slate-500">{y.starts_on} – {y.ends_on} · {statusLabels[y.status]}</div></div>)}</div>
+   {!years.length&&<p className="text-sm text-slate-500">Chưa có năm học. Hãy tạo năm học trước khi mở lớp học phần.</p>}
+  </section>
+  <section className="card overflow-hidden"><div className="flex flex-wrap gap-1 border-b border-slate-200 p-2">{tabs.map(t=><button type="button" key={t.id} onClick={()=>setTab(t.id)} className={'inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm '+(tab===t.id?'bg-brand-50 font-semibold text-brand-700':'text-slate-600 hover:bg-slate-50')}><t.icon size={16}/>{t.label}</button>)}</div><div className="space-y-4 p-4">
+   {tab==='offerings'&&<><div><h2 className="font-semibold">Mở lớp học phần</h2><p className="text-sm text-slate-500">Chỉ chọn học phần thuộc phiên bản chương trình đã phê duyệt và cùng đơn vị.</p></div>{canTrainingCreate&&<form onSubmit={submitOffering} className="grid gap-2 md:grid-cols-2 xl:grid-cols-5"><select required value={offeringForm.org_unit_id} onChange={e=>setOfferingForm(v=>({...v,org_unit_id:e.target.value,class_group_id:'',program_subject_id:'',academic_term_id:''}))} className="field"><option value="">Đơn vị</option>{units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select><select required value={offeringForm.class_group_id} onChange={e=>setOfferingForm(v=>({...v,class_group_id:e.target.value}))} className="field"><option value="">Lớp hành chính</option>{classes.filter(c=>c.org_unit_id===offeringForm.org_unit_id).map(c=><option key={c.id} value={c.id}>{c.class_code} · {c.name}</option>)}</select><select required value={offeringForm.academic_term_id} onChange={e=>setOfferingForm(v=>({...v,academic_term_id:e.target.value}))} className="field"><option value="">Học kỳ</option>{terms.filter(t=>years.find(y=>y.id===t.academic_year_id)?.org_unit_id===offeringForm.org_unit_id).map(t=><option key={t.id} value={t.id}>{termName(t.id)}</option>)}</select><select required value={offeringForm.program_subject_id} onChange={e=>setOfferingForm(v=>({...v,program_subject_id:e.target.value,planned_hours:String(programSubjects.find(p=>p.id===e.target.value)?.total_hours??'')}))} className="field"><option value="">Học phần đã duyệt</option>{programSubjects.map(p=><option key={p.id} value={p.id}>{subjectName(p.subject_id)} · {p.total_hours} giờ</option>)}</select><div className="flex gap-2"><input required type="number" min="1" value={offeringForm.planned_hours} onChange={e=>setOfferingForm(v=>({...v,planned_hours:e.target.value}))} placeholder="Số giờ" className="field min-w-0"/><button disabled={saving} className="btn-primary whitespace-nowrap"><Plus size={14} className="mr-1 inline"/> Mở lớp</button></div></form>}
+    <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="p-2">Đơn vị</th><th className="p-2">Lớp / học phần</th><th className="p-2">Học kỳ</th><th className="p-2">Giờ kế hoạch</th><th className="p-2">Trạng thái</th></tr></thead><tbody className="divide-y">{offerings.map(o=><tr key={o.id}><td className="p-2">{unitName(o.org_unit_id)}</td><td className="p-2">{offeringLabel(o)}</td><td className="p-2">{termName(o.academic_term_id)}</td><td className="p-2">{o.planned_hours}</td><td className="p-2">{statusLabels[o.status]??o.status}</td></tr>)}</tbody></table>{!offerings.length&&<p className="py-6 text-center text-sm text-slate-500">Chưa có lớp học phần.</p>}</div></>}
+   {tab==='rooms'&&<><div><h2 className="font-semibold">Danh mục phòng học, xưởng và khu thực hành</h2></div>{canTeachingCreate&&<form onSubmit={submitRoom} className="grid gap-2 md:grid-cols-2 xl:grid-cols-5"><select required value={roomForm.org_unit_id} onChange={e=>setRoomForm(v=>({...v,org_unit_id:e.target.value}))} className="field"><option value="">Đơn vị quản lý</option>{units.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select><input required value={roomForm.code} onChange={e=>setRoomForm(v=>({...v,code:e.target.value}))} placeholder="Mã phòng/xưởng" className="field"/><input required value={roomForm.name} onChange={e=>setRoomForm(v=>({...v,name:e.target.value}))} placeholder="Tên phòng/xưởng" className="field"/><select value={roomForm.room_type} onChange={e=>setRoomForm(v=>({...v,room_type:e.target.value}))} className="field">{Object.entries(roomTypes).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select><div className="flex gap-2"><input type="number" min="1" value={roomForm.capacity} onChange={e=>setRoomForm(v=>({...v,capacity:e.target.value}))} placeholder="Sức chứa" className="field min-w-0"/><button disabled={saving} className="btn-primary whitespace-nowrap"><Plus size={14} className="mr-1 inline"/> Thêm</button></div></form>}
+    <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="p-2">Mã</th><th className="p-2">Tên</th><th className="p-2">Đơn vị</th><th className="p-2">Loại</th><th className="p-2">Sức chứa</th><th className="p-2">Trạng thái</th></tr></thead><tbody className="divide-y">{rooms.map(r=><tr key={r.id}><td className="p-2 font-mono">{r.code}</td><td className="p-2">{r.name}</td><td className="p-2">{unitName(r.org_unit_id)}</td><td className="p-2">{roomTypes[r.room_type]??r.room_type}</td><td className="p-2">{r.capacity??'—'}</td><td className="p-2">{r.is_active?'Đang dùng':'Ngừng dùng'}</td></tr>)}</tbody></table>{!rooms.length&&<p className="py-6 text-center text-sm text-slate-500">Chưa có phòng/xưởng.</p>}</div></>}
+   {tab==='assignments'&&<><div><h2 className="font-semibold">Phân công giáo viên</h2><p className="text-sm text-slate-500">Chỉ nhân sự đang công tác, có phân công đơn vị phù hợp mới được ghi nhận.</p></div>{canTeachingCreate&&<form onSubmit={submitAssignment} className="grid gap-2 md:grid-cols-2 xl:grid-cols-5"><select required value={assignmentForm.offering_id} onChange={e=>setAssignmentForm(v=>({...v,offering_id:e.target.value}))} className="field"><option value="">Lớp học phần</option>{offerings.filter(o=>o.status==='planned'||o.status==='open').map(o=><option key={o.id} value={o.id}>{offeringLabel(o)}</option>)}</select><select required value={assignmentForm.staff_id} onChange={e=>setAssignmentForm(v=>({...v,staff_id:e.target.value}))} className="field"><option value="">Giáo viên đủ điều kiện</option>{eligibleStaff.map(s=><option key={s.id} value={s.id}>{s.staff_code} · {s.full_name}</option>)}</select><select value={assignmentForm.assignment_role} onChange={e=>setAssignmentForm(v=>({...v,assignment_role:e.target.value}))} className="field"><option value="primary">Giảng viên chính</option><option value="co_teacher">Đồng giảng</option><option value="practice_supervisor">Hướng dẫn thực hành</option></select><input required type="date" value={assignmentForm.assigned_from} onChange={e=>setAssignmentForm(v=>({...v,assigned_from:e.target.value}))} className="field"/><div className="flex gap-2"><input type="date" value={assignmentForm.assigned_to} onChange={e=>setAssignmentForm(v=>({...v,assigned_to:e.target.value}))} className="field min-w-0"/><button disabled={saving} className="btn-primary whitespace-nowrap"><Plus size={14} className="mr-1 inline"/> Phân công</button></div></form>}
+    <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="p-2">Lớp học phần</th><th className="p-2">Giáo viên</th><th className="p-2">Vai trò</th><th className="p-2">Hiệu lực</th><th className="p-2">Trạng thái</th></tr></thead><tbody className="divide-y">{assignments.map(a=><tr key={a.id}><td className="p-2">{offerings.find(o=>o.id===a.offering_id)?offeringLabel(offerings.find(o=>o.id===a.offering_id)!):'Lớp học phần'}</td><td className="p-2">{staffName(a.staff_id)}</td><td className="p-2">{a.assignment_role}</td><td className="p-2">{a.assigned_from} – {a.assigned_to??'Không thời hạn'}</td><td className="p-2">{statusLabels[a.status]??a.status}</td></tr>)}</tbody></table>{!assignments.length&&<p className="py-6 text-center text-sm text-slate-500">Chưa có phân công giảng dạy.</p>}</div></>}
+   {tab==='timetable'&&<><div><h2 className="font-semibold">Lập và công bố thời khóa biểu</h2><p className="text-sm text-slate-500">Mỗi tiết được lưu ở trạng thái bản nháp; chỉ người có quyền phê duyệt mới công bố được.</p></div>{canTeachingCreate&&<form onSubmit={submitSlot} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><select required value={slotForm.offering_id} onChange={e=>setSlotForm(v=>({...v,offering_id:e.target.value,teaching_assignment_id:''}))} className="field"><option value="">Lớp học phần</option>{offerings.filter(o=>o.status==='planned'||o.status==='open').map(o=><option key={o.id} value={o.id}>{offeringLabel(o)}</option>)}</select><select required value={slotForm.teaching_assignment_id} onChange={e=>setSlotForm(v=>({...v,teaching_assignment_id:e.target.value}))} className="field"><option value="">Giáo viên được phân công</option>{assignments.filter(a=>a.offering_id===slotForm.offering_id&&a.status==='active').map(a=><option key={a.id} value={a.id}>{staffName(a.staff_id)}</option>)}</select><select value={slotForm.classroom_id} onChange={e=>setSlotForm(v=>({...v,classroom_id:e.target.value}))} className="field"><option value="">Chưa chọn phòng</option>{rooms.filter(r=>r.is_active&&(!slotForm.offering_id||r.org_unit_id===offerings.find(o=>o.id===slotForm.offering_id)?.org_unit_id)).map(r=><option key={r.id} value={r.id}>{r.code} · {r.name}</option>)}</select><select value={slotForm.day_of_week} onChange={e=>setSlotForm(v=>({...v,day_of_week:e.target.value}))} className="field">{days.map((d,i)=><option key={d} value={i+1}>{d}</option>)}</select><input required type="number" min="1" value={slotForm.period_start} onChange={e=>setSlotForm(v=>({...v,period_start:e.target.value}))} placeholder="Tiết bắt đầu" className="field"/><input required type="number" min={slotForm.period_start} value={slotForm.period_end} onChange={e=>setSlotForm(v=>({...v,period_end:e.target.value}))} placeholder="Tiết kết thúc" className="field"/><input required type="date" value={slotForm.effective_from} onChange={e=>setSlotForm(v=>({...v,effective_from:e.target.value}))} className="field"/><div className="flex gap-2"><input required type="date" value={slotForm.effective_to} onChange={e=>setSlotForm(v=>({...v,effective_to:e.target.value}))} className="field min-w-0"/><button disabled={saving} className="btn-primary whitespace-nowrap"><Plus size={14} className="mr-1 inline"/> Thêm tiết</button></div></form>}
+    {canTeachingApprove&&<div className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 p-3"><Send size={17} className="text-amber-700"/><span className="text-sm font-medium">Công bố lịch theo học kỳ:</span>{terms.map(t=>{const y=years.find(v=>v.id===t.academic_year_id);return y?<button key={t.id} type="button" disabled={saving||!slots.some(s=>s.status==='draft'&&s.offering_id&&offerings.some(o=>o.id===s.offering_id&&o.academic_term_id===t.id))} onClick={()=>void publish(t.id,y.org_unit_id)} className="btn-primary">{t.name} · {y.code}</button>:null})}</div>}
+    <div className="overflow-x-auto"><table className="w-full min-w-[760px] text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="p-2">Thứ</th><th className="p-2">Tiết</th><th className="p-2">Lớp / học phần</th><th className="p-2">Giáo viên</th><th className="p-2">Phòng</th><th className="p-2">Khoảng ngày</th><th className="p-2">Trạng thái</th></tr></thead><tbody className="divide-y">{slots.map(s=>{const a=assignments.find(x=>x.id===s.teaching_assignment_id);const o=offerings.find(x=>x.id===s.offering_id);const room=rooms.find(x=>x.id===s.classroom_id);return <tr key={s.id}><td className="p-2">{days[s.day_of_week-1]}</td><td className="p-2">{s.period_start}–{s.period_end}</td><td className="p-2">{o?offeringLabel(o):'Lớp học phần'}</td><td className="p-2">{a?staffName(a.staff_id):'—'}</td><td className="p-2">{room?room.code+' · '+room.name:'—'}</td><td className="p-2">{s.effective_from} – {s.effective_to}</td><td className="p-2">{statusLabels[s.status]??s.status}</td></tr>})}</tbody></table>{!slots.length&&<p className="py-6 text-center text-sm text-slate-500">Chưa có tiết học.</p>}</div></>}
+  </div></section>
+  {loading&&<p className="text-center text-sm text-slate-500">Đang tải dữ liệu...</p>}
+  {!canTrainingCreate&&!canTeachingCreate&&<p className="text-xs text-slate-400">Chế độ chỉ xem. Thao tác quản lý phụ thuộc quyền Đào tạo và Giảng dạy.</p>}
+ </div>
+}
