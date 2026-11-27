@@ -33,6 +33,7 @@ export default function StudentsPage(){
    supabase.from('students').select('id,student_code,full_name,date_of_birth,phone,status,org_unit_id').order('created_at',{ascending:false}).limit(500),
    supabase.from('cohorts').select('id,cohort_code,name,start_year,end_year,org_unit_id,status').order('start_year',{ascending:false}),
    supabase.from('class_groups').select('id,class_code,name,cohort_id,org_unit_id,status').order('class_code'),
+   supabase.from('student_enrollments').select('student_id,cohort_id'),
    supabase.from('org_units').select('id,code,name').eq('is_active',true).is('deleted_at',null).order('sort_order')
   ])
   const failure=s.error??c.error??g.error??e.error
@@ -42,7 +43,7 @@ export default function StudentsPage(){
  },[])
  useEffect(()=>{void load()},[load])
  const filtered=useMemo(()=>students.filter(s=>(!search||[s.student_code,s.full_name,s.phone??''].some(v=>v.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi'))))&&(!cohortFilter||enrollments.some(e=>e.student_id===s.id&&e.cohort_id===cohortFilter))),[students,search,cohortFilter,enrollments])
- const canCreate=can('students','create'),canUpdate=can('students','update')
+ const canCreate=can('students','create')
  async function saveStudent(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
   const {error:e1}=await supabase.from('students').insert({org_unit_id:studentForm.org_unit_id,student_code:studentForm.student_code.trim().toUpperCase(),full_name:studentForm.full_name.trim(),date_of_birth:studentForm.date_of_birth||null,phone:studentForm.phone.trim()||null})
   setSaving(false);if(e1){setError(e1.code==='23505'?'Mã người học đã tồn tại.':e1.message);return};setModal(null);setStudentForm({org_unit_id:'',student_code:'',full_name:'',date_of_birth:'',phone:''});await load()
