@@ -389,7 +389,9 @@ begin
  insert into public.work_updates(work_item_id,progress_percent,update_text,blocker,created_by)
  values(p_work_item_id,p_progress,left(btrim(p_text),4000),nullif(left(btrim(coalesce(p_blocker,'')),2000),''),v_uid)
  returning id into v_id;
- if p_progress<100 and v_item.status='blocked' and coalesce(p_blocker,'')='' then
+ if coalesce(btrim(p_blocker),'')<>'' then
+  update public.work_items set status='blocked',updated_at=now() where id=p_work_item_id;
+ elsif v_item.status='blocked' then
   update public.work_items set status='in_progress',updated_at=now() where id=p_work_item_id;
  end if;
  return v_id;
