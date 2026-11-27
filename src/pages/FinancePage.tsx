@@ -60,7 +60,6 @@ export default function FinancePage(){
  },[])
  useEffect(()=>{void load()},[load])
  const studentLabel=(id:string)=>{const s=students.find(x=>x.student_id===id);return s?s.student_code+' · '+s.full_name:'Người học'}
- const feeLabel=(id:string)=>{const f=fees.find(x=>x.id===id);return f?f.fee_code+' · '+f.fee_name:'Khoản thu'}
  const invoiceLabel=(i:Invoice)=>i.invoice_no+' · '+studentLabel(i.student_id)+' · '+money(i.total_amount)
 
  async function addFee(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
