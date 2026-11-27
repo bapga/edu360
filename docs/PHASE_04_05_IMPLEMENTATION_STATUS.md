@@ -16,14 +16,17 @@ Nhánh: `feature/edu360-admissions-students-foundation`
 ## Kiểm tra đã thực hiện
 
 - Đã chạy thử toàn bộ ba migration trong một transaction trên Supabase production và rollback toàn bộ. DDL/trigger/RPC/policies chạy qua không lỗi; không để lại thay đổi schema hoặc dữ liệu.
-- Đây là kiểm tra cú pháp và khả năng thực thi DDL, không phải kiểm thử quyền bằng tài khoản thật hoặc kiểm thử concurrency.
-- Chưa áp dụng migration lên production.
+- Sau khi áp dụng production, đã xác minh 13/13 bảng có RLS bật; kiểm thử JWT claims mô phỏng BGH trong transaction rollback: chỉ có reports.view, đọc trực tiếp applicants/students = 0 dòng, RPC reports_summary trả số tổng hợp; transaction rollback không tạo tài khoản/role test.
+- Đã áp dụng đủ 4 migration lên Supabase production ngày 2026-11-27; 13/13 bảng nghiệp vụ mới bật RLS.
 - Chưa có biểu mẫu tuyển sinh chính thức của trường để đối chiếu các trường thông tin; trường dữ liệu hiện là bộ tối thiểu theo đặc tả đã thống nhất, cần bổ sung/điều chỉnh sau khi đối chiếu mẫu thực tế.
 - Chưa triển khai upload file và Storage policies; hai bảng documents hiện chỉ lưu metadata/object path. Không tải tài liệu thật vào cho đến khi private bucket và policies được cấu hình.
 - Chưa có UI chuyển đổi nhập học từ thí sinh trúng tuyển; RPC chuyển đổi đã có nhưng cần thêm bước chọn khóa/lớp, xác nhận và test idempotency/concurrency.
 - Chưa có UI biến động lớp/bảo lưu/thôi học, quản lý người liên hệ và hồ sơ giấy tờ chi tiết.
 - Chưa có import Excel, export, phân trang server-side hoặc browser E2E.
 - Chưa có dữ liệu thí sinh/người học thật. Không seed dữ liệu giả.
+
+- Supabase Security Advisor ghi nhận 13 SECURITY DEFINER RPC có thể gọi bởi authenticated (gồm các RPC workflow mới và RPC nền tảng đã rà soát); tất cả RPC mới có auth.uid(), kiểm tra quyền/scoped unit, search_path rỗng và EXECUTE chỉ cấp authenticated. Advisor cũng nhắc leaked-password protection đang OFF; cần bật trong cấu hình Auth.
+- Performance Advisor hiện báo FK index bổ sung và các index mới chưa được sử dụng do bảng đang rỗng; đây là cảnh báo hiệu năng cần xem lại sau khi có dữ liệu, không phải lỗi phát hành.
 
 ## Cổng phát hành
 
