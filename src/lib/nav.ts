@@ -31,7 +31,8 @@ export const navGroups: NavGroup[] = [
     title: 'Đào tạo',
     items: [
       { path: '/tuyen-sinh', label: 'Tuyển sinh', icon: UserPlus, phase: 'Giai đoạn 5', description: 'Chỉ tiêu, đợt tuyển sinh và hồ sơ thí sinh.' },
-      { path: '/dao-tao', label: 'Chương trình & kế hoạch', icon: BookOpen, phase: 'Giai đoạn 5', description: 'Nghề, môn học, mô-đun, lớp, thời khóa biểu.' },
+      { path: '/dao-tao', label: 'Chương trình & kế hoạch', icon: BookOpen, phase: 'Giai đoạn 5', description: 'Danh mục nghề, chương trình và học phần.' },
+      { path: '/giang-day', label: 'Giảng dạy & thời khóa biểu', icon: CalendarDays, phase: 'Giai đoạn 6', description: 'Mở lớp học phần, phân công giáo viên, phòng/xưởng và lịch học.' },
       { path: '/nguoi-hoc', label: 'Người học', icon: GraduationCap, phase: 'Giai đoạn 4–5', description: 'Hồ sơ người học gốc, khóa tuyển sinh và lớp hành chính.' },
     ],
   },
