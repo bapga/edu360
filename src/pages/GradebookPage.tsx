@@ -38,9 +38,9 @@ export default function GradebookPage(){
  const canAttendanceApprove=can('teaching','approve')
  const canGradeCreate=can('grades','create')||can('grades','update')
  const canGradeApprove=can('grades','approve')
- const activeGradebook=gradebooks.find(g=>g.id===selectedGradebook)
+ const activeGradebook=gradebooks.find(g=>g.id===selectedGradebook&&g.offering_id===selectedOffering)
  const totalWeight=useMemo(()=>components.reduce((sum,c)=>sum+Number(c.weight),0),[components])
- const attendanceSession=sessions.find(s=>s.id===selectedSession)
+ const attendanceSession=sessions.find(s=>s.id===selectedSession&&s.offering_id===selectedOffering)
  const offeringLabel=(id:string)=>{const o=offerings.find(x=>x.id===id);return o?'Lớp '+o.class_group_id.slice(0,8)+' · '+o.planned_hours+' giờ':'Lớp học phần'}
 
  const load=useCallback(async()=>{
@@ -87,6 +87,8 @@ export default function GradebookPage(){
   setScores({})
  },[])
  useEffect(()=>{if(selectedOffering)void loadRoster(selectedOffering)},[selectedOffering,loadRoster])
+ useEffect(()=>{const list=sessions.filter(s=>s.offering_id===selectedOffering);if(!list.some(s=>s.id===selectedSession))setSelectedSession(list[0]?.id??'')},[sessions,selectedOffering,selectedSession])
+ useEffect(()=>{const list=gradebooks.filter(g=>g.offering_id===selectedOffering);if(!list.some(g=>g.id===selectedGradebook))setSelectedGradebook(list[0]?.id??'')},[gradebooks,selectedOffering,selectedGradebook])
  useEffect(()=>{if(selectedSession)void loadAttendance(selectedSession)},[selectedSession,loadAttendance])
  useEffect(()=>{if(selectedGradebook)void loadGradebook(selectedGradebook)},[selectedGradebook,loadGradebook])
 
