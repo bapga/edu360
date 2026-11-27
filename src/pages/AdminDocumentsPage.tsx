@@ -1,4 +1,4 @@
-import {useCallback,useEffect,useMemo,useState,type FormEvent} from 'react'
+import {useCallback,useEffect,useState,type FormEvent} from 'react'
 import {FileText,RefreshCw,Plus,Send,CheckCircle2,Archive} from 'lucide-react'
 import {supabase} from '../lib/supabase'
 import {usePermissions} from '../contexts/PermissionContext'
@@ -23,7 +23,7 @@ export default function AdminDocumentsPage(){
  const [form,setForm]=useState({org_unit_id:'',document_no:'',document_type:'incoming',subject:'',sender:'',recipient:'',issued_date:'',received_date:new Date().toISOString().slice(0,10),effective_date:'',confidentiality:'internal',summary:'',file_reference:''})
  const selected=docs.find(d=>d.id===selectedId)
  const canCreate=can('admin_docs','create'),canApprove=can('admin_docs','approve')
- const selectedEvents=useMemo(()=>events.filter(e=>e.id&&selectedId),[events,selectedId])
+ const unitName=(id:string)=>units.find(u=>u.id===id)?.name??'Đơn vị'
  const load=useCallback(async()=>{
   if(!supabase){setError('Chưa cấu hình Supabase.');setLoading(false);return}
   setLoading(true);setError(null)
