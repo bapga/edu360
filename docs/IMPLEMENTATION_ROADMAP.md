@@ -109,3 +109,17 @@ Mô hình dữ liệu tổng quan cho các miền nghiệp vụ chưa có bảng
 
 ## Kế hoạch phát hành và migration
 Toàn bộ cổng bảo mật, thứ tự migration, nghiệm thu theo JWT, rollback và ranh giới phê duyệt được tổng hợp tại `docs/RELEASE_READINESS_AND_MIGRATION_PLAN.md`. Đây là checklist phát hành; các P0 production đang chặn phát hành cho đến khi được xử lý và kiểm thử.
+
+
+## Cập nhật triển khai thực tế — 2026-11-27
+
+Các trạng thái bên trên là mốc thiết kế ngày 2026-11-26. Tình trạng triển khai mới nhất được đối chiếu với Supabase migration history, GitHub và Vercel:
+
+- **Nền tảng/RBAC:** đã triển khai production; Admin có quyền quản trị theo ma trận, BGH chỉ `reports.view`.
+- **Tuyển sinh và Người học:** đã có schema/RLS/RPC và giao diện nền tảng; chưa có dữ liệu thật, chưa tích hợp lưu file hồ sơ vào private Storage.
+- **Danh mục đào tạo:** 7 bảng `occupations`, `training_programs`, `program_versions`, `subjects`, `program_subjects`, `academic_years`, `academic_terms` đã áp dụng production; có RPC phê duyệt phiên bản.
+- **Mở lớp học phần/giảng dạy/ thời khóa biểu:** 4 bảng `class_subject_offerings`, `classrooms`, `teaching_assignments`, `timetable_slots` đã áp dụng production bằng migration `20261127111338_teaching_timetable_foundation`; RLS bật, kiểm tra hiệu lực phân công giáo viên, RPC công bố lịch có kiểm tra xung đột.
+- **Chưa hoàn tất:** giao diện quản lý lớp học phần/phân công/TKB; chuyên cần; đánh giá/điểm; khóa điểm/sửa điểm; xét tốt nghiệp; tài chính/kế toán; tài sản; văn bản/hành chính; công việc/lịch công tác; AI Office.
+- **Chặn nghiệm thu toàn trường:** chưa có dữ liệu nhân sự, lớp, chương trình, học phần, phòng/xưởng và hồ sơ tuyển sinh thực tế; chưa có tài khoản giáo viên/BGH/chuyên viên thật để E2E; chưa đối chiếu biểu mẫu và quyết định đào tạo thực tế; chưa chạy browser E2E toàn luồng.
+
+Không coi việc tạo bảng/RLS là hoàn tất giao diện hoặc nghiệm thu nghiệp vụ. Mọi chặng tiếp theo phải có UI, workflow, kiểm thử phân quyền API/RLS, kiểm thử dữ liệu thật được cung cấp và production verification.
