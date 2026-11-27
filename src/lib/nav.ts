@@ -26,6 +26,8 @@ export const navGroups: NavGroup[] = [
       { path: '/nhan-su', label: 'Nhân sự', icon: Users, phase: 'Giai đoạn 4', description: 'Hồ sơ viên chức, hợp đồng, kiêm nhiệm, đánh giá.' },
       { path: '/tai-chinh', label: 'Tài chính - Kế toán', icon: Wallet, phase: 'Giai đoạn 8', description: 'Khoản thu, hóa đơn người học, phiếu thu và đề nghị chi.' },
       { path: '/tai-san', label: 'Quản lý tài sản', icon: Boxes, phase: 'Giai đoạn 8', description: 'Sổ tài sản, bàn giao, thu hồi, bảo trì và lịch sử biến động.' },
+      { path: '/van-ban', label: 'Văn bản & hồ sơ', icon: FileText, phase: 'Giai đoạn 9', description: 'Văn bản đến/đi, trình duyệt, ban hành và lưu trữ.' },
+      { path: '/cong-viec', label: 'Công việc & tiến độ', icon: ClipboardList, phase: 'Giai đoạn 9', description: 'Giao việc, phân công, cập nhật tiến độ và nghiệm thu.' },
       { path: '/hanh-chinh', label: 'Hành chính - Tài chính', icon: Wallet, phase: 'Giai đoạn 4', description: 'Văn bản, thu chi, tài sản và cơ sở vật chất.' },
     ],
   },
