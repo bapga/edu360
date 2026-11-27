@@ -5,7 +5,7 @@ import { usePermissions } from '../contexts/PermissionContext'
 
 const moduleByPath: Record<string, string> = {
   '/to-chuc': 'org', '/nhan-su': 'hr', '/hanh-chinh': 'admin_docs',
-  '/tuyen-sinh': 'admissions', '/dao-tao': 'training', '/giang-day': 'teaching', '/nguoi-hoc/diem': 'grades', '/tai-chinh': 'finance', '/tai-san': 'assets', '/nguoi-hoc': 'students',
+  '/tuyen-sinh': 'admissions', '/dao-tao': 'training', '/giang-day': 'training', '/nguoi-hoc/diem': 'grades', '/tai-chinh': 'finance', '/tai-san': 'assets', '/nguoi-hoc': 'students',
   '/cong-viec': 'tasks', '/lich-cong-tac': 'tasks', '/van-ban': 'admin_docs',
   '/bao-cao': 'reports', '/ai-office': 'ai_office', '/quan-tri': 'system',
 }
