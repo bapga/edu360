@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
+import AccessGate from './components/AccessGate'
 import { useAuth } from './contexts/AuthContext'
 import { usePermissions } from './contexts/PermissionContext'
 
@@ -10,6 +11,8 @@ const OrganizationPage = lazy(() => import('./pages/OrganizationPage'))
 const StaffPage = lazy(() => import('./pages/StaffPage'))
 const SystemAdminPage = lazy(() => import('./pages/SystemAdminPage'))
 const ReportsPage = lazy(() => import('./pages/ReportsPage'))
+const AdmissionsPage = lazy(() => import('./pages/AdmissionsPage'))
+const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const Login = lazy(() => import('./pages/Login'))
 
 function LoadingScreen() {
@@ -31,10 +34,12 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
-          <Route path="to-chuc" element={<OrganizationPage />} />
-          <Route path="nhan-su" element={<StaffPage />} />
-          <Route path="quan-tri" element={<SystemAdminPage />} />
-          <Route path="bao-cao" element={<ReportsPage />} />
+          <Route path="to-chuc" element={<AccessGate moduleCode="org"><OrganizationPage /></AccessGate>} />
+          <Route path="nhan-su" element={<AccessGate moduleCode="hr"><StaffPage /></AccessGate>} />
+          <Route path="quan-tri" element={<AccessGate moduleCode="system"><SystemAdminPage /></AccessGate>} />
+          <Route path="bao-cao" element={<AccessGate moduleCode="reports"><ReportsPage /></AccessGate>} />
+          <Route path="tuyen-sinh" element={<AccessGate moduleCode="admissions"><AdmissionsPage /></AccessGate>} />
+          <Route path="nguoi-hoc" element={<AccessGate moduleCode="students"><StudentsPage /></AccessGate>} />
           <Route path="*" element={<ModulePage />} />
         </Route>
       </Routes>
