@@ -14,6 +14,7 @@ const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 const AdmissionsPage = lazy(() => import('./pages/AdmissionsPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const GradebookPage = lazy(() => import('./pages/GradebookPage'))
+const FinancePage = lazy(() => import('./pages/FinancePage'))
 const TrainingPage = lazy(() => import('./pages/TrainingPage'))
 const TeachingPage = lazy(() => import('./pages/TeachingPage'))
 const Login = lazy(() => import('./pages/Login'))
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="bao-cao" element={<AccessGate moduleCode="reports"><ReportsPage /></AccessGate>} />
           <Route path="tuyen-sinh" element={<AccessGate moduleCode="admissions"><AdmissionsPage /></AccessGate>} />
           <Route path="nguoi-hoc/diem" element={<AccessGate moduleCode="grades"><GradebookPage /></AccessGate>} />
+          <Route path="tai-chinh" element={<AccessGate moduleCode="finance"><FinancePage /></AccessGate>} />
           <Route path="nguoi-hoc" element={<AccessGate moduleCode="students"><StudentsPage /></AccessGate>} />
           <Route path="dao-tao" element={<AccessGate moduleCode="training"><TrainingPage /></AccessGate>} />
           <Route path="giang-day" element={<AccessGate moduleCode="teaching"><TeachingPage /></AccessGate>} />
