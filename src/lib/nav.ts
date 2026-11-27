@@ -32,7 +32,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { path: '/tuyen-sinh', label: 'Tuyển sinh', icon: UserPlus, phase: 'Giai đoạn 5', description: 'Chỉ tiêu, đợt tuyển sinh và hồ sơ thí sinh.' },
       { path: '/dao-tao', label: 'Chương trình & kế hoạch', icon: BookOpen, phase: 'Giai đoạn 5', description: 'Nghề, môn học, mô-đun, lớp, thời khóa biểu.' },
-      { path: '/nguoi-hoc', label: 'Người học & điểm', icon: GraduationCap, phase: 'Giai đoạn 6', description: 'Hồ sơ HSSV, chuyên cần, rèn luyện, điểm, tốt nghiệp.' },
+      { path: '/nguoi-hoc', label: 'Người học', icon: GraduationCap, phase: 'Giai đoạn 4–5', description: 'Hồ sơ người học gốc, khóa tuyển sinh và lớp hành chính.' },
     ],
   },
   {
