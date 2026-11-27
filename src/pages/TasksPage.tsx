@@ -8,7 +8,7 @@ type Task={id:string;org_unit_id:string;task_no:string;title:string;description:
 type Staff={staff_id:string;staff_code:string;full_name:string}
 type Assignment={id:string;work_item_id:string;staff_id:string;assignment_role:string;status:string;assigned_at:string}
 type Update={id:string;work_item_id:string;progress_percent:number;update_text:string;blocker:string|null;created_by:string;created_at:string}
-type Event={id:string;event_type:string;from_status:string|null;to_status:string|null;note:string|null;created_at:string}
+type Event={id:string;work_item_id:string;event_type:string;from_status:string|null;to_status:string|null;note:string|null;created_at:string}
 const statusLabel:Record<string,string>={draft:'Bản nháp',submitted:'Chờ duyệt',approved:'Đã duyệt',returned:'Yêu cầu sửa',in_progress:'Đang thực hiện',blocked:'Đang vướng',completion_requested:'Chờ nghiệm thu',completed:'Hoàn thành',cancelled:'Đã hủy'}
 const priorityLabel:Record<string,string>={low:'Thấp',normal:'Bình thường',high:'Cao',urgent:'Khẩn'}
 const roleLabel:Record<string,string>={owner:'Chủ trì',contributor:'Phối hợp',reviewer:'Theo dõi'}
@@ -34,7 +34,7 @@ export default function TasksPage(){
  const canCreate=can('tasks','create'),canUpdate=can('tasks','update'),canApprove=can('tasks','approve')
  const selectedAssignments=assignments.filter(a=>a.work_item_id===selectedId)
  const selectedUpdates=updates.filter(u=>u.work_item_id===selectedId)
- const selectedEvents=events.filter(e=>e.id&&selectedId)
+ const selectedEvents=events.filter(e=>e.work_item_id===selectedId)
 
  const load=useCallback(async()=>{
   if(!supabase){setError('Chưa cấu hình Supabase.');setLoading(false);return}
@@ -52,6 +52,7 @@ export default function TasksPage(){
   setLoading(false)
  },[])
  useEffect(()=>{void load()},[load])
+ useEffect(()=>{if(selected?.org_unit_id)setStaffUnit(selected.org_unit_id)},[selected?.org_unit_id])
  useEffect(()=>{if(!supabase||!staffUnit){setStaff([]);return}void supabase.rpc('get_task_staff_lookup',{p_org_unit_id:staffUnit}).then(({data,error:e})=>{if(e)setError(e.message);setStaff((data??[]) as Staff[])})},[staffUnit])
  const unitName=(id:string)=>units.find(u=>u.id===id)?.name??'Đơn vị'
  const staffName=(id:string)=>{const s=staff.find(x=>x.staff_id===id);return s?s.staff_code+' · '+s.full_name:'Nhân sự'}
