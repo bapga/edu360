@@ -14,6 +14,7 @@ const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 const AdmissionsPage = lazy(() => import('./pages/AdmissionsPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const TrainingPage = lazy(() => import('./pages/TrainingPage'))
+const TeachingPage = lazy(() => import('./pages/TeachingPage'))
 const Login = lazy(() => import('./pages/Login'))
 
 function LoadingScreen() {
@@ -42,6 +43,7 @@ export default function App() {
           <Route path="tuyen-sinh" element={<AccessGate moduleCode="admissions"><AdmissionsPage /></AccessGate>} />
           <Route path="nguoi-hoc" element={<AccessGate moduleCode="students"><StudentsPage /></AccessGate>} />
           <Route path="dao-tao" element={<AccessGate moduleCode="training"><TrainingPage /></AccessGate>} />
+          <Route path="giang-day" element={<AccessGate moduleCode="teaching"><TeachingPage /></AccessGate>} />
           <Route path="*" element={<ModulePage />} />
         </Route>
       </Routes>
