@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
-import { CalendarDays, BookOpen, Users, DoorOpen, Plus, RefreshCw, Send, Clock3 } from 'lucide-react'
+import { CalendarDays, BookOpen, Users, DoorOpen, Plus, RefreshCw, Send } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../contexts/PermissionContext'
 
