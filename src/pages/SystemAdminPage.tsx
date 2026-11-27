@@ -6,7 +6,7 @@ import { usePermissions } from '../contexts/PermissionContext'
 
 type ChangeType = 'matrix_grant' | 'matrix_revoke' | 'role_assign' | 'role_unassign'
 type PermissionAction = 'view' | 'create' | 'update' | 'delete' | 'approve' | 'import' | 'export'
-type DataScope = 'all' | 'unit' | 'own'
+type DataScope = 'all' | 'unit' | 'own' | 'assigned'
 interface Role { id: string; code: string; name: string }
 interface Module { id: string; code: string; name: string }
 interface Profile { id: string; full_name: string | null; email: string | null; status: string }
@@ -264,7 +264,7 @@ export default function SystemAdminPage() {
             {(changeType === 'matrix_grant' || changeType === 'matrix_revoke') ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <label className="block text-sm font-medium text-slate-700">Phân hệ
-                  <select value={moduleCode} onChange={(event) => setModuleCode(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                  <select value={moduleCode} onChange={(event) => { const next = event.target.value; setModuleCode(next); if (dataScope === "assigned" && !["teaching", "grades"].includes(next)) setDataScope("unit") }} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
                     {modules.map((module) => <option key={module.id} value={module.code}>{module.name}</option>)}
                   </select>
                 </label>
@@ -275,7 +275,7 @@ export default function SystemAdminPage() {
                 </label>
                 <label className="block text-sm font-medium text-slate-700">Phạm vi dữ liệu
                   <select value={dataScope} onChange={(event) => setDataScope(event.target.value as DataScope)} className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                    <option value="all">Toàn trường</option><option value="unit">Theo đơn vị</option><option value="own">Của bản thân</option>
+                    <option value="all">Toàn trường</option><option value="unit">Theo đơn vị</option><option value="own">Của bản thân</option>{["teaching", "grades"].includes(moduleCode) && <option value="assigned">Lớp được phân công</option>}
                   </select>
                 </label>
               </div>
