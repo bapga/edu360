@@ -51,7 +51,7 @@ export default function App() {
           <Route path="tai-san" element={<AccessGate moduleCode="assets"><AssetsPage /></AccessGate>} />
           <Route path="nguoi-hoc" element={<AccessGate moduleCode="students"><StudentsPage /></AccessGate>} />
           <Route path="dao-tao" element={<AccessGate moduleCode="training"><TrainingPage /></AccessGate>} />
-          <Route path="giang-day" element={<AccessGate moduleCode="teaching"><TeachingPage /></AccessGate>} />
+          <Route path="giang-day" element={<AccessGate moduleCode="training"><TeachingPage /></AccessGate>} />
           <Route path="cong-viec" element={<AccessGate moduleCode="tasks"><TasksPage /></AccessGate>} />
           <Route path="van-ban" element={<AccessGate moduleCode="admin_docs"><AdminDocsPage /></AccessGate>} />
           <Route path="hanh-chinh" element={<AccessGate moduleCode="admin_docs"><AdminDocsPage /></AccessGate>} />
