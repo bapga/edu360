@@ -1,34 +1,29 @@
-# EDU360 — Triển khai nền tảng Chặng 6 (Danh mục chương trình)
+# EDU360 — Trạng thái Chặng 6: Danh mục chương trình đào tạo
 
-Ngày cập nhật: 2026-11-27  
-Nhánh: `feature/edu360-curriculum-foundation`
+Ngày cập nhật: 2026-11-27
+Nhánh triển khai tiếp theo: `feature/edu360-teaching-timetable-foundation`
 
-## Đã xây dựng trong nhánh
+## Đã triển khai production
 
-- Migration `20261127100000_curriculum_catalog_foundation.sql`:
-  - occupations, training_programs, program_versions
-  - subjects, program_subjects
-  - academic_years, academic_terms
-  - khóa ngoại, unique/check constraints, indexes và RLS theo training permission + org_unit
-  - phiên bản chương trình chỉ sửa khi draft/review; phê duyệt qua RPC `approve_program_version` và cần số quyết định/lý do.
-- Giao diện `TrainingPage`: danh mục nghề, chương trình, học phần, tạo phiên bản, cấu hình học phần theo phiên bản, gửi duyệt/phê duyệt.
-- Route `/dao-tao` được bảo vệ bằng AccessGate `training`.
+- Migration `20261127100000_curriculum_catalog_foundation.sql` đã áp dụng vào Supabase production (migration history: `20261127094044_curriculum_catalog_foundation`).
+- 7 bảng đã tạo và bật RLS: `occupations`, `training_programs`, `program_versions`, `subjects`, `program_subjects`, `academic_years`, `academic_terms`.
+- RPC `approve_program_version` kiểm tra quyền `training.approve`, số quyết định, lý do và yêu cầu phiên bản có học phần trước khi phê duyệt.
+- Giao diện `TrainingPage` đã có danh mục nghề, chương trình, học phần, phiên bản và cấu hình học phần theo phiên bản; route `/dao-tao` được bảo vệ bởi AccessGate.
 
-## Kiểm tra
+## Kiểm thử đã thực hiện
 
-- Migration đã chạy thử trong transaction rollback trên Supabase production; DDL, policies và RPC chạy qua không lỗi; không để lại thay đổi.
-- Chưa áp dụng migration production.
-- Preview/CI đang chờ kết quả trên PR.
+- Migration chạy thử trong transaction rollback trên production trước khi áp dụng.
+- Đã xác minh RLS bật trên cả 7 bảng.
+- Kiểm thử JWT BGH mô phỏng trong transaction rollback: chỉ có `reports.view`, không đọc được danh mục nghề/chương trình/học phần/phiên bản.
+- GitHub CI và Vercel production deployment của commit `825ed1946f757f97c9c38af2a0d66eb42ccce0f0` đạt trạng thái thành công/READY.
 - Chưa có dữ liệu nghề/chương trình/học phần thật; không seed dữ liệu giả.
 
-## Cổng trước production
+## Phạm vi còn thiếu của Chặng 6
 
-- Đối chiếu danh mục nghề, mã nghề, trình độ, chương trình và quyết định đang áp dụng của trường.
-- Đối chiếu số giờ lý thuyết/thực hành/thực tập, học kỳ và thứ tự học phần.
-- Kiểm thử JWT theo Phòng Đào tạo/khoa/Giáo viên/BGH; BGH chỉ xem báo cáo.
-- Kiểm thử tính bất biến của phiên bản đã phê duyệt và separation-of-duty.
-- Sau khi chốt dữ liệu chuẩn mới triển khai kế hoạch đào tạo, mở lớp học phần, phân công giáo viên, TKB, chuyên cần và điểm.
+Kế hoạch đào tạo theo khóa/năm học, mở lớp học phần, phân công giáo viên, phòng/xưởng, thời khóa biểu, chuyên cần, đánh giá, điểm, khóa điểm, tính kết quả và xét tốt nghiệp vẫn đang được triển khai theo từng lát cắt. Không coi danh mục chương trình là hoàn thành toàn bộ Chặng 6.
 
-## Chưa thuộc phạm vi đã hoàn tất
+## Cổng nghiệm thu còn lại
 
-Kế hoạch đào tạo chi tiết, phân công giảng dạy, thời khóa biểu, phòng/xưởng, chuyên cần, đánh giá, điểm, khóa điểm và xét tốt nghiệp chưa được xây dựng trong nhánh này. Không coi danh mục chương trình là hoàn thành toàn bộ Chặng 6.
+- Đối chiếu chương trình, số giờ, quyết định và biểu mẫu thật của trường.
+- Kiểm thử tài khoản thật theo Phòng Đào tạo/khoa/giáo viên/BGH.
+- Kiểm thử browser E2E, import Excel, upload tài liệu và quy trình nghiệp vụ thực tế.
