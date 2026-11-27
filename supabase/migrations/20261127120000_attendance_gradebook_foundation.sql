@@ -344,6 +344,7 @@ begin
   raise exception 'not allowed' using errcode='42501';
  end if;
  if v_gradebook.status not in ('draft','returned') then raise exception 'gradebook cannot be submitted from current status'; end if;
+ if not exists(select 1 from public.student_enrollments e where e.class_group_id=v_offering.class_group_id and e.status='studying') then raise exception 'class has no active student enrollments'; end if;
  if not exists(select 1 from public.grade_components c where c.gradebook_id=p_gradebook_id) then raise exception 'gradebook has no assessment components'; end if;
  select coalesce(sum(c.weight),0) into v_weight from public.grade_components c where c.gradebook_id=p_gradebook_id;
  if v_weight<>100 then raise exception 'assessment weights must total exactly 100 percent'; end if;
