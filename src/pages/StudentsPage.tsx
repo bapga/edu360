@@ -6,14 +6,16 @@ import { usePermissions } from '../contexts/PermissionContext'
 type Student={id:string;student_code:string;full_name:string;date_of_birth:string|null;phone:string|null;status:string;org_unit_id:string}
 type Cohort={id:string;cohort_code:string;name:string;start_year:number;end_year:number;org_unit_id:string;status:string}
 type ClassGroup={id:string;class_code:string;name:string;cohort_id:string;org_unit_id:string;status:string}
-type Unit={id:string;code:string;name:string}\ntype EnrollmentRef={student_id:string;cohort_id:string}
+type Unit={id:string;code:string;name:string}
+type EnrollmentRef={student_id:string;cohort_id:string}
 const statusLabel:Record<string,string>={active:'Đang học',reserved:'Bảo lưu',withdrawn:'Thôi học',graduated:'Đã tốt nghiệp',transferred:'Chuyển trường'}
 
 export default function StudentsPage(){
  const {can}=usePermissions()
  const [students,setStudents]=useState<Student[]>([])
  const [cohorts,setCohorts]=useState<Cohort[]>([])
- const [classes,setClasses]=useState<ClassGroup[]>([])\n const [enrollments,setEnrollments]=useState<EnrollmentRef[]>([])
+ const [classes,setClasses]=useState<ClassGroup[]>([])
+ const [enrollments,setEnrollments]=useState<EnrollmentRef[]>([])
  const [units,setUnits]=useState<Unit[]>([])
  const [search,setSearch]=useState('')
  const [cohortFilter,setCohortFilter]=useState('')
