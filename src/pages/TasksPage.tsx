@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { ClipboardList, Plus, RefreshCw, UserPlus, Send, Play, MessageSquareText, CheckCircle2 } from 'lucide-react'
+import { ClipboardList, Plus, RefreshCw, UserPlus, Send, Play, MessageSquareText } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../contexts/PermissionContext'
 
@@ -32,8 +32,8 @@ export default function TasksPage(){
  },[])
  useEffect(()=>{void load()},[load])
  async function act(fn:string,args:Record<string,unknown>,message:string){if(!supabase)return;setSaving(true);setError(null);setNotice(null);const {error:e}=await supabase.rpc(fn,args);setSaving(false);if(e){setError(e.message);return};setNotice(message);await load()}
- async function create(e:FormEvent){e.preventDefault();if(!supabase)return;if(!form.org_unit_id||!form.task_no.trim()||!form.title.trim()){setError('Cần chọn đơn vị, mã công việc và tiêu đề.');return}
-  setSaving(true);setError(null);const {data,error:e}=await supabase.from('work_items').insert({...form,task_no:form.task_no.trim(),title:form.title.trim(),description:form.description.trim()||null,category:form.category.trim()||null,start_date:form.start_date||null,due_date:form.due_date||null,status:'draft'}).select('id').single();setSaving(false);if(e){setError(e.message);return};setNotice('Đã tạo công việc ở trạng thái bản nháp.');setShowForm(false);setSelected(data.id);setForm({org_unit_id:'',task_no:'',title:'',description:'',category:'',priority:'normal',start_date:'',due_date:''});await load()
+ async function create(event:FormEvent){event.preventDefault();if(!supabase)return;if(!form.org_unit_id||!form.task_no.trim()||!form.title.trim()){setError('Cần chọn đơn vị, mã công việc và tiêu đề.');return}
+  setSaving(true);setError(null);const {data,error:dbError}=await supabase.from('work_items').insert({...form,task_no:form.task_no.trim(),title:form.title.trim(),description:form.description.trim()||null,category:form.category.trim()||null,start_date:form.start_date||null,due_date:form.due_date||null,status:'draft'}).select('id').single();setSaving(false);if(dbError||!data){setError(dbError?.message??'Không nhận được mã công việc sau khi lưu.');return};setNotice('Đã tạo công việc ở trạng thái bản nháp.');setShowForm(false);setSelected(data.id);setForm({org_unit_id:'',task_no:'',title:'',description:'',category:'',priority:'normal',start_date:'',due_date:''});await load()
  }
  async function assign(){if(!selected||!assignForm.staff_id)return;await act('assign_work_item',{p_work_item_id:selected,p_staff_id:assignForm.staff_id,p_role:assignForm.role},'Đã giao công việc.');setAssignForm({staff_id:'',role:'owner'})}
  async function addUpdate(e:FormEvent){e.preventDefault();if(!selected)return;await act('add_work_update',{p_work_item_id:selected,p_progress:Number(updateForm.progress),p_text:updateForm.text,p_blocker:updateForm.blocker},'Đã cập nhật tiến độ.');setUpdateForm({progress:'0',text:'',blocker:''})}
