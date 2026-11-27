@@ -16,6 +16,8 @@ const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const GradebookPage = lazy(() => import('./pages/GradebookPage'))
 const FinancePage = lazy(() => import('./pages/FinancePage'))
 const AssetsPage = lazy(() => import('./pages/AssetsPage'))
+const AdminDocumentsPage = lazy(() => import('./pages/AdminDocumentsPage'))
+const TasksPage = lazy(() => import('./pages/TasksPage'))
 const TrainingPage = lazy(() => import('./pages/TrainingPage'))
 const TeachingPage = lazy(() => import('./pages/TeachingPage'))
 const Login = lazy(() => import('./pages/Login'))
@@ -47,6 +49,8 @@ export default function App() {
           <Route path="nguoi-hoc/diem" element={<AccessGate moduleCode="grades"><GradebookPage /></AccessGate>} />
           <Route path="tai-chinh" element={<AccessGate moduleCode="finance"><FinancePage /></AccessGate>} />
           <Route path="tai-san" element={<AccessGate moduleCode="assets"><AssetsPage /></AccessGate>} />
+          <Route path="van-ban" element={<AccessGate moduleCode="admin_docs"><AdminDocumentsPage /></AccessGate>} />
+          <Route path="cong-viec" element={<AccessGate moduleCode="tasks"><TasksPage /></AccessGate>} />
           <Route path="nguoi-hoc" element={<AccessGate moduleCode="students"><StudentsPage /></AccessGate>} />
           <Route path="dao-tao" element={<AccessGate moduleCode="training"><TrainingPage /></AccessGate>} />
           <Route path="giang-day" element={<AccessGate moduleCode="teaching"><TeachingPage /></AccessGate>} />
