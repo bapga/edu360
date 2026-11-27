@@ -1,5 +1,5 @@
 import { useCallback,useEffect,useMemo,useState,type FormEvent } from 'react'
-import { BookOpen,Plus,RefreshCw,Search,Layers3,CheckCircle2 } from 'lucide-react'
+import { BookOpen,Plus,RefreshCw,Search,CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../contexts/PermissionContext'
 
@@ -49,7 +49,7 @@ export default function TrainingPage(){
   setLoading(false)
  },[])
  useEffect(()=>{void load()},[load])
- const canCreate=can('training','create'),canUpdate=can('training','update'),canApprove=can('training','approve')
+ const canCreate=can('training','create'),canApprove=can('training','approve')
  const filteredPrograms=useMemo(()=>programs.filter(p=>!search||[p.code,p.name].some(x=>x.toLocaleLowerCase('vi').includes(search.toLocaleLowerCase('vi')))),[programs,search])
  async function saveOccupation(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
   const {error:e1}=await supabase.from('occupations').insert({org_unit_id:occupationForm.org_unit_id,code:occupationForm.code.trim().toUpperCase(),name:occupationForm.name.trim(),qualification_level:occupationForm.qualification_level})
