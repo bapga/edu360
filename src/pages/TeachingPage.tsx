@@ -7,7 +7,9 @@ type Unit = { id:string; code:string; name:string }
 type Year = { id:string; org_unit_id:string; code:string; starts_on:string; ends_on:string; status:string }
 type Term = { id:string; academic_year_id:string; term_code:string; name:string; starts_on:string; ends_on:string; status:string }
 type ClassGroup = { id:string; org_unit_id:string; class_code:string; name:string; status:string }
-type ProgramSubject = { id:string; total_hours:number; term_no:number; subject_id:string; program_version_id:string }\ntype ProgramVersion = { id:string; status:string; program_id:string }\ntype Program = { id:string; org_unit_id:string }
+type ProgramSubject = { id:string; total_hours:number; term_no:number; subject_id:string; program_version_id:string }
+type ProgramVersion = { id:string; status:string; program_id:string }
+type Program = { id:string; org_unit_id:string }
 type Subject = { id:string; code:string; name:string }
 type Staff = { id:string; staff_code:string; full_name:string; status:string }
 type StaffAssignment = { staff_id:string; org_unit_id:string; start_date:string; end_date:string|null; status:string }
@@ -26,7 +28,9 @@ export default function TeachingPage() {
  const [years,setYears]=useState<Year[]>([])
  const [terms,setTerms]=useState<Term[]>([])
  const [classes,setClasses]=useState<ClassGroup[]>([])
- const [programSubjects,setProgramSubjects]=useState<ProgramSubject[]>([])\n const [programVersions,setProgramVersions]=useState<ProgramVersion[]>([])\n const [programs,setPrograms]=useState<Program[]>([])
+ const [programSubjects,setProgramSubjects]=useState<ProgramSubject[]>([])
+ const [programVersions,setProgramVersions]=useState<ProgramVersion[]>([])
+ const [programs,setPrograms]=useState<Program[]>([])
  const [subjects,setSubjects]=useState<Subject[]>([])
  const [staff,setStaff]=useState<Staff[]>([])
  const [staffAssignments,setStaffAssignments]=useState<StaffAssignment[]>([])
@@ -61,7 +65,9 @@ export default function TeachingPage() {
    supabase.from('class_subject_offerings').select('id,org_unit_id,class_group_id,program_subject_id,academic_term_id,planned_hours,status').order('created_at',{ascending:false}),
    supabase.from('classrooms').select('id,org_unit_id,code,name,room_type,capacity,is_active').order('code'),
    supabase.from('teaching_assignments').select('id,offering_id,staff_id,assignment_role,assigned_from,assigned_to,status').order('created_at',{ascending:false}),
-   supabase.from('timetable_slots').select('id,offering_id,teaching_assignment_id,classroom_id,day_of_week,period_start,period_end,effective_from,effective_to,status').order('day_of_week'),\n   supabase.from('program_versions').select('id,status,program_id'),\n   supabase.from('training_programs').select('id,org_unit_id')
+   supabase.from('timetable_slots').select('id,offering_id,teaching_assignment_id,classroom_id,day_of_week,period_start,period_end,effective_from,effective_to,status').order('day_of_week'),
+   supabase.from('program_versions').select('id,status,program_id'),
+   supabase.from('training_programs').select('id,org_unit_id')
   ] as const
   const results=await Promise.all(tasks)
   const failure=results.find(x=>x.error)?.error
@@ -80,7 +86,9 @@ export default function TeachingPage() {
  const termName=(id:string)=>{const t=terms.find(x=>x.id===id);return t?t.name+' ('+t.term_code+')':'Học kỳ'}
  const unitName=(id:string)=>units.find(x=>x.id===id)?.name??'Đơn vị'
  const offeringLabel=(o:Offering)=>className(o.class_group_id)+' / '+subjectName(programSubjects.find(p=>p.id===o.program_subject_id)?.subject_id??'')+' / '+termName(o.academic_term_id)
- const selectedOffering=offerings.find(o=>o.id===assignmentForm.offering_id)\n const eligibleStaff=useMemo(()=>staff.filter(person=>staffAssignments.some(a=>a.staff_id===person.id&&a.status==='active'&&a.org_unit_id===selectedOffering?.org_unit_id&&(!assignmentForm.assigned_from||a.start_date<=assignmentForm.assigned_from)&&(!assignmentForm.assigned_to||!a.end_date||a.end_date>=assignmentForm.assigned_to))), [staff,staffAssignments,selectedOffering?.org_unit_id,assignmentForm.assigned_from,assignmentForm.assigned_to])\n const eligibleProgramSubjects=programSubjects.filter(ps=>{const v=programVersions.find(x=>x.id===ps.program_version_id);const p=programs.find(x=>x.id===v?.program_id);return v?.status==='approved'&&p?.org_unit_id===offeringForm.org_unit_id})
+ const selectedOffering=offerings.find(o=>o.id===assignmentForm.offering_id)
+ const eligibleStaff=useMemo(()=>staff.filter(person=>staffAssignments.some(a=>a.staff_id===person.id&&a.status==='active'&&a.org_unit_id===selectedOffering?.org_unit_id&&(!assignmentForm.assigned_from||a.start_date<=assignmentForm.assigned_from)&&(!assignmentForm.assigned_to||!a.end_date||a.end_date>=assignmentForm.assigned_to))), [staff,staffAssignments,selectedOffering?.org_unit_id,assignmentForm.assigned_from,assignmentForm.assigned_to])
+ const eligibleProgramSubjects=programSubjects.filter(ps=>{const v=programVersions.find(x=>x.id===ps.program_version_id);const p=programs.find(x=>x.id===v?.program_id);return v?.status==='approved'&&p?.org_unit_id===offeringForm.org_unit_id})
 
  async function submitYear(e:FormEvent){e.preventDefault();if(!supabase)return;setSaving(true);setError(null)
   const {error:e1}=await supabase.from('academic_years').insert({...yearForm,code:yearForm.code.trim(),status:'planned'})
