@@ -128,7 +128,7 @@ create policy asset_maintenance_select on public.asset_maintenance for select to
 create policy asset_maintenance_insert on public.asset_maintenance for insert to authenticated
  with check(status='reported' and created_by=auth.uid()
   and exists(select 1 from public.assets a where a.id=asset_id and a.status in ('available','assigned')
-   and private.has_permission('assets','create',a.org_unit_id)));
+   and (private.has_permission('assets','create',a.org_unit_id) or private.has_permission('assets','update',a.org_unit_id))));
 create policy asset_movements_select on public.asset_movements for select to authenticated
  using(exists(select 1 from public.assets a where a.id=asset_id and private.has_permission('assets','view',a.org_unit_id)));
 
@@ -210,6 +210,7 @@ begin
  if not found or v_assignment.status<>'active' then raise exception 'active asset assignment not found'; end if;
  select * into v_asset from public.assets where id=v_assignment.asset_id for update;
  if not private.has_permission('assets','update',v_asset.org_unit_id) then raise exception 'not allowed' using errcode='42501'; end if;
+ if v_asset.status<>'assigned' then raise exception 'asset is not in assigned status'; end if;
  if p_condition not in ('new','good','fair','poor') then raise exception 'invalid return condition'; end if;
  perform set_config('app.asset_workflow','on',true);
  update public.asset_assignments set status='returned',returned_at=coalesce(p_returned_at,current_date),returned_by=v_uid,
@@ -242,7 +243,7 @@ begin
   approved_by=case when p_approve then v_uid else null end,approved_at=case when p_approve then now() else null end,
   decision_note=left(btrim(p_note),2000),updated_at=now() where id=p_maintenance_id;
  insert into public.asset_movements(asset_id,movement_type,movement_date,from_location,to_location,from_status,to_status,reference_id,note,created_by)
- values(v_asset.id,'maintenance_started',current_date,v_asset.location,v_asset.location,v_asset.status,
+ values(v_asset.id,case when p_approve then 'maintenance_started' else 'adjusted' end,current_date,v_asset.location,v_asset.location,v_asset.status,
   case when p_approve then 'maintenance' else v_asset.status end,p_maintenance_id,left(btrim(p_note),2000),v_uid);
 end;
 $function$;
