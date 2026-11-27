@@ -3,7 +3,8 @@ import { Wallet,RefreshCw,Plus,CheckCircle2,Send } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { usePermissions } from '../contexts/PermissionContext'
 
-type Unit={id:string;code:string;name:string}\ntype Fee={id:string;org_unit_id:string;fee_code:string;fee_name:string;fee_type:string;unit_price:number;is_active:boolean}
+type Unit={id:string;code:string;name:string}
+type Fee={id:string;org_unit_id:string;fee_code:string;fee_name:string;fee_type:string;unit_price:number;is_active:boolean}
 type FinanceStudent={student_id:string;enrollment_id:string;org_unit_id:string;student_code:string;full_name:string;class_group_id:string}
 type Invoice={id:string;org_unit_id:string;student_id:string;enrollment_id:string;invoice_no:string;issue_date:string;due_date:string|null;status:string;total_amount:number;created_by:string}
 type Line={id:string;invoice_id:string;fee_item_id:string;description:string;quantity:number;unit_price:number;line_total:number}
@@ -16,7 +17,8 @@ const money=(v:number)=>new Intl.NumberFormat('vi-VN',{style:'currency',currency
 export default function FinancePage(){
  const {can}=usePermissions()
  const [tab,setTab]=useState<'fees'|'invoices'|'receipts'|'expenses'>('fees')
- const [units,setUnits]=useState<Unit[]>([])\n const [fees,setFees]=useState<Fee[]>([])
+ const [units,setUnits]=useState<Unit[]>([])
+ const [fees,setFees]=useState<Fee[]>([])
  const [students,setStudents]=useState<FinanceStudent[]>([])
  const [invoices,setInvoices]=useState<Invoice[]>([])
  const [lines,setLines]=useState<Line[]>([])
@@ -41,7 +43,8 @@ export default function FinancePage(){
  const load=useCallback(async()=>{
   if(!supabase){setError('Chưa cấu hình kết nối Supabase.');setLoading(false);return}
   setLoading(true);setError(null)
-  const [u,f,s,i,l,p,e]=await Promise.all([\n   supabase.from('org_units').select('id,code,name').eq('is_active',true).is('deleted_at',null).order('sort_order'),
+  const [u,f,s,i,l,p,e]=await Promise.all([
+   supabase.from('org_units').select('id,code,name').eq('is_active',true).is('deleted_at',null).order('sort_order'),
    supabase.from('fee_catalog').select('id,org_unit_id,fee_code,fee_name,fee_type,unit_price,is_active').order('fee_name'),
    supabase.rpc('get_finance_student_lookup'),
    supabase.from('student_invoices').select('id,org_unit_id,student_id,enrollment_id,invoice_no,issue_date,due_date,status,total_amount,created_by').order('created_at',{ascending:false}),
