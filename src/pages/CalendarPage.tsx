@@ -80,7 +80,7 @@ export default function CalendarPage() {
         const end = new Date(year, monthNumber, 1)
         return supabase.from('calendar_events')
           .select('id,org_unit_id,title,description,location,starts_at,ends_at,all_day,status,created_by,published_at')
-          .gte('starts_at', start.toISOString())
+          .gt('ends_at', start.toISOString())
           .lt('starts_at', end.toISOString())
           .order('starts_at')
       })(),
@@ -162,10 +162,10 @@ export default function CalendarPage() {
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-brand-700"><CalendarDays size={17} /> Điều hành</div>
           <h1 className="mt-1 text-2xl font-semibold text-navy-900">Lịch công tác</h1>
-          <p className="mt-1 text-sm text-slate-500">Lịch họp, sự kiện và hoạt động theo đơn vị; lịch chỉ hiển thị sau khi được công bố.</p>
+          <p className="mt-1 text-sm text-slate-500">Lịch họp, sự kiện và hoạt động theo đơn vị; bản nháp chỉ người tạo và người phê duyệt được xem.</p>
         </div>
         <div className="flex items-center gap-2">
-          <input aria-label="Tháng xem lịch" type="month" value={month} onChange={(event) => setMonth(event.target.value)} className="field" />
+          <input aria-label="Tháng xem lịch" type="month" value={month} onChange={(event) => setMonth(event.target.value || monthValue())} className="field" />
           <button type="button" onClick={() => void loadData()} disabled={loading} className="btn-ghost inline-flex items-center gap-2"><RefreshCw size={15} className={loading ? 'animate-spin' : ''} /> Làm mới</button>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function CalendarPage() {
                   <h3 className="font-semibold text-navy-900">{item.title}</h3>
                   <span className={item.status === 'published' ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700' : 'rounded-full bg-amber-50 px-2 py-0.5 text-xs text-amber-700'}>{statusLabels[item.status]}</span>
                 </div>
-                <p className="text-xs text-slate-500">{unitNames.get(item.org_unit_id) ?? 'Đơn vị'} · {item.all_day ? 'Cả ngày' : new Date(item.starts_at).toLocaleString('vi-VN')} – {item.all_day ? '' : new Date(item.ends_at).toLocaleString('vi-VN')}</p>
+                <p className="text-xs text-slate-500">{unitNames.get(item.org_unit_id) ?? 'Đơn vị'} · {item.all_day ? `Cả ngày · ${new Date(item.starts_at).toLocaleDateString('vi-VN')}` : `${new Date(item.starts_at).toLocaleString('vi-VN')} – ${new Date(item.ends_at).toLocaleString('vi-VN')}`}</p>
                 {item.location && <p className="flex items-center gap-1 text-sm text-slate-600"><MapPin size={14} /> {item.location}</p>}
                 {item.description && <p className="whitespace-pre-wrap text-sm text-slate-600">{item.description}</p>}
               </div>
