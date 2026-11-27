@@ -1,7 +1,7 @@
 # EDU360 — Chặng 6B: Mở lớp học phần, phân công và thời khóa biểu
 
 Ngày: 2026-11-27
-Trạng thái: migration bổ sung đã được tạo và chạy thử transaction rollback; chưa áp dụng production.
+Trạng thái: **đã áp dụng production** sau khi PR #6 được merge.
 
 ## Phạm vi lát cắt
 
@@ -23,8 +23,13 @@ Migration `20261127111000_teaching_timetable_foundation.sql` bổ sung:
 
 ## Kiểm tra
 
-- Migration đã chạy thử thành công trong transaction rollback trên Supabase production; không để lại DDL.
-- Chưa áp dụng migration production; cần CI/Preview, review RLS và test JWT mô phỏng trước khi merge.
+- Migration đã chạy thử thành công trong transaction rollback trước khi áp dụng.
+- Migration production đã áp dụng: `20261127111338_teaching_timetable_foundation`.
+- Xác minh RLS bật trên cả 4 bảng; mỗi bảng có 3 policy.
+- Kiểm thử JWT mô phỏng Admin: có `training.view`, `teaching.view`, `teaching.approve`.
+- Kiểm thử JWT mô phỏng BGH: không có các quyền trên; SELECT cả 4 bảng trả 0 dòng.
+- GitHub CI/Vercel Preview thành công; Vercel production commit `ed2da7bc6495e35b8cc04d88b99073548552c5d9` đạt READY.
+- Runtime Errors production 24 giờ: không phát hiện lỗi.
 - Chưa có dữ liệu nhân sự, lớp, học phần, phòng hoặc lịch thật để kiểm thử nghiệp vụ.
 - Chưa có giao diện nhập phân công/thời khóa biểu trong lát cắt này; UI sẽ được nối sau khi schema được duyệt qua CI.
 
