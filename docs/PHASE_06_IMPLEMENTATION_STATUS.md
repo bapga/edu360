@@ -1,29 +1,51 @@
-# EDU360 — Trạng thái Chặng 6: Danh mục chương trình đào tạo
+# EDU360 — Trạng thái Chặng 6: Đào tạo, giảng dạy và thời khóa biểu
 
-Ngày cập nhật: 2026-11-27
-Nhánh triển khai tiếp theo: `feature/edu360-teaching-timetable-foundation`
+Ngày đối chiếu production: 2026-11-27
 
-## Đã triển khai production
+## Đã triển khai
 
-- Migration `20261127100000_curriculum_catalog_foundation.sql` đã áp dụng vào Supabase production (migration history: `20261127094044_curriculum_catalog_foundation`).
-- 7 bảng đã tạo và bật RLS: `occupations`, `training_programs`, `program_versions`, `subjects`, `program_subjects`, `academic_years`, `academic_terms`.
-- RPC `approve_program_version` kiểm tra quyền `training.approve`, số quyết định, lý do và yêu cầu phiên bản có học phần trước khi phê duyệt.
-- Giao diện `TrainingPage` đã có danh mục nghề, chương trình, học phần, phiên bản và cấu hình học phần theo phiên bản; route `/dao-tao` được bảo vệ bởi AccessGate.
+### Danh mục chương trình đào tạo
+- Migration `20261127094044_curriculum_catalog_foundation` đã áp dụng production.
+- 7 bảng có RLS: `occupations`, `training_programs`, `program_versions`, `subjects`, `program_subjects`, `academic_years`, `academic_terms`.
+- Có RPC phê duyệt phiên bản chương trình; phiên bản đã duyệt được bảo vệ khỏi sửa trực tiếp.
+- Giao diện tại `/dao-tao`.
 
-## Kiểm thử đã thực hiện
+### Mở lớp học phần, phân công và thời khóa biểu
+- Migration `20261127111338_teaching_timetable_foundation` đã có trong Supabase migration history.
+- 4 bảng có RLS: `class_subject_offerings`, `classrooms`, `teaching_assignments`, `timetable_slots`.
+- RPC `publish_timetable` yêu cầu `teaching.approve`, lý do công bố và kiểm tra xung đột lớp, giáo viên, phòng/xưởng trước khi công bố.
+- Giao diện tại `/giang-day`: mở lớp học phần, quản lý phòng/xưởng, phân công giáo viên, tạo tiết và công bố thời khóa biểu.
+- Phân công giáo viên được đối chiếu với hồ sơ nhân sự và phân công công tác hiện hành.
 
-- Migration chạy thử trong transaction rollback trên production trước khi áp dụng.
-- Đã xác minh RLS bật trên cả 7 bảng.
-- Kiểm thử JWT BGH mô phỏng trong transaction rollback: chỉ có `reports.view`, không đọc được danh mục nghề/chương trình/học phần/phiên bản.
-- GitHub CI và Vercel production deployment của commit `825ed1946f757f97c9c38af2a0d66eb42ccce0f0` đạt trạng thái thành công/READY.
-- Chưa có dữ liệu nghề/chương trình/học phần thật; không seed dữ liệu giả.
+## Xác minh production ngày 2026-11-27
 
-## Phạm vi còn thiếu của Chặng 6
+- Supabase migration history xác nhận cả hai migration ở trên đã áp dụng.
+- Supabase table inventory xác nhận 11 bảng danh mục/kế hoạch/giảng dạy tương ứng tồn tại và RLS đang bật.
+- Vercel production deployment commit `63a971cdefdf0c14a74eece70d9b13bdc7516f33` đạt trạng thái `READY`.
+- Runtime Errors trong 24 giờ gần nhất: không phát hiện lỗi.
+- Dữ liệu thực tế của lớp, chương trình, học phần, nhân sự, phân công và phòng/xưởng hiện chưa được nhập; không seed dữ liệu giả.
 
-Kế hoạch đào tạo theo khóa/năm học, mở lớp học phần, phân công giáo viên, phòng/xưởng, thời khóa biểu, chuyên cần, đánh giá, điểm, khóa điểm, tính kết quả và xét tốt nghiệp vẫn đang được triển khai theo từng lát cắt. Không coi danh mục chương trình là hoàn thành toàn bộ Chặng 6.
+## Chưa hoàn thành — không được coi là nghiệm thu Chặng 6
 
-## Cổng nghiệm thu còn lại
+1. Kế hoạch đào tạo theo khóa/năm học và theo dõi tiến độ giờ.
+2. Điểm danh theo buổi, đóng phiên và yêu cầu sửa chuyên cần.
+3. Cấu hình thang điểm/công thức theo quy chế từng chương trình.
+4. Đánh giá, nhập/nộp điểm, duyệt, khóa điểm và quy trình sửa điểm.
+5. Tính/công bố kết quả học tập và xét tốt nghiệp.
+6. Báo cáo đào tạo tổng hợp cho Ban Giám hiệu qua RPC; BGH chỉ được xem số liệu tổng hợp, không truy cập bảng nguồn.
+7. Kiểm thử browser E2E với tài khoản thật của Phòng Đào tạo, khoa, giáo viên và BGH.
 
-- Đối chiếu chương trình, số giờ, quyết định và biểu mẫu thật của trường.
-- Kiểm thử tài khoản thật theo Phòng Đào tạo/khoa/giáo viên/BGH.
-- Kiểm thử browser E2E, import Excel, upload tài liệu và quy trình nghiệp vụ thực tế.
+## Cổng nghiệm thu
+
+- Đối chiếu chương trình, số giờ, quyết định, biểu mẫu, quy chế và công thức điểm thực tế của trường.
+- Kiểm thử RLS/RPC bằng JWT của từng vai trò; kiểm tra cả truy cập trực tiếp API.
+- Kiểm thử xung đột lịch đồng thời, khóa điểm, separation-of-duty và audit.
+- Chạy browser E2E, kiểm tra import/export và phục hồi dữ liệu.
+- Chỉ xác nhận nghiệm thu khi có dữ liệu và tài khoản thật; không dùng dữ liệu giả để đánh dấu đạt.
+
+## Nguyên tắc bảo mật
+
+- RLS/RPC ở PostgreSQL là lớp bảo mật quyết định; frontend guards không thay thế RLS.
+- BGH chỉ có `reports.view`; không cấp quyền đọc trực tiếp dữ liệu người học, nhân sự, lịch cá nhân hay điểm cá nhân.
+- Không hard-code công thức điểm hoặc điều kiện tốt nghiệp khi chưa đối chiếu quy chế được phê duyệt.
+- Mọi sửa điểm sau khi nộp/khóa phải qua yêu cầu, người duyệt độc lập, lý do và audit.
