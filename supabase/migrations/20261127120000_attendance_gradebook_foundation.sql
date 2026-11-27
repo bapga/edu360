@@ -90,6 +90,14 @@ alter table public.gradebooks enable row level security;
 alter table public.grade_components enable row level security;
 alter table public.grade_entries enable row level security;
 
+drop policy if exists class_subject_offerings_select on public.class_subject_offerings;
+create policy class_subject_offerings_select on public.class_subject_offerings
+ for select to authenticated using (
+  private.has_permission('training','view',org_unit_id)
+  or private.has_permission('teaching','view',org_unit_id)
+  or private.has_permission('grades','view',org_unit_id)
+ );
+
 create policy attendance_sessions_select on public.attendance_sessions
  for select to authenticated using (
   exists(select 1 from public.class_subject_offerings o where o.id=offering_id and private.has_permission('teaching','view',o.org_unit_id))
