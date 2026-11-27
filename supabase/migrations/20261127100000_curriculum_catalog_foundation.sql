@@ -146,7 +146,7 @@ create policy training_programs_insert on public.training_programs for insert to
 with check(private.has_permission('training','create',org_unit_id) and exists(select 1 from public.occupations o where o.id=occupation_id and o.org_unit_id=training_programs.org_unit_id));
 create policy training_programs_update on public.training_programs for update to authenticated
 using(private.has_permission('training','update',org_unit_id))
-with check(private.has_permission('training','update',org_unit_id));
+with check(private.has_permission('training','update',org_unit_id) and exists(select 1 from public.occupations o where o.id=occupation_id and o.org_unit_id=training_programs.org_unit_id));
 
 create policy program_versions_select on public.program_versions for select to authenticated
 using(exists(select 1 from public.training_programs p where p.id=program_id and private.has_permission('training','view',p.org_unit_id)));
@@ -183,10 +183,10 @@ with check(private.has_permission('training','update',org_unit_id));
 create policy academic_terms_select on public.academic_terms for select to authenticated
 using(exists(select 1 from public.academic_years y where y.id=academic_year_id and private.has_permission('training','view',y.org_unit_id)));
 create policy academic_terms_insert on public.academic_terms for insert to authenticated
-with check(exists(select 1 from public.academic_years y where y.id=academic_year_id and private.has_permission('training','create',y.org_unit_id)));
+with check(exists(select 1 from public.academic_years y where y.id=academic_year_id and y.starts_on <= academic_terms.starts_on and y.ends_on >= academic_terms.ends_on and private.has_permission('training','create',y.org_unit_id)));
 create policy academic_terms_update on public.academic_terms for update to authenticated
 using(exists(select 1 from public.academic_years y where y.id=academic_year_id and private.has_permission('training','update',y.org_unit_id)))
-with check(exists(select 1 from public.academic_years y where y.id=academic_year_id and private.has_permission('training','update',y.org_unit_id)));
+with check(exists(select 1 from public.academic_years y where y.id=academic_year_id and y.starts_on <= academic_terms.starts_on and y.ends_on >= academic_terms.ends_on and private.has_permission('training','update',y.org_unit_id)));
 
 create or replace function public.approve_program_version(p_version_id uuid,p_decision_number text,p_reason text)
 returns text language plpgsql security definer set search_path = ''
